@@ -1,0 +1,33 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pulseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9945FF"/>
+      <stop offset="100%" stop-color="#14F195"/>
+    </linearGradient>
+    <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#9945FF"/>
+      <stop offset="55%" stop-color="#00D1FF"/>
+      <stop offset="100%" stop-color="#14F195"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="200" height="200" rx="40" fill="#0B0C10"/>
+
+  <g stroke="url(#pulseGrad)" fill="none" stroke-linecap="round">
+    <path d="M 36.56 78.42 A 70 70 0 0 1 167.61 89.88" stroke-width="6" opacity="0.55"/>
+    <path d="M 42.04 92.47 A 60 60 0 0 1 159.09 97.58" stroke-width="6" opacity="0.61"/>
+    <path d="M 50.76 99.32 A 50 50 0 0 1 149.81 103.64" stroke-width="6" opacity="0.68"/>
+    <path d="M 70.00 108.00 A 30 30 0 0 1 130.00 108.00" stroke-width="6" opacity="0.81"/>
+    <path d="M 80.30 111.47 A 20 20 0 1 1 120.00 108.00" stroke-width="6" opacity="0.87"/>
+  </g>
+
+  <!-- Pulse / heartbeat line reading across the print -->
+  <path
+    d="M 22 132 L 68 132 L 78 108 L 90 156 L 102 116 L 112 132 L 178 132"
+    fill="none"
+    stroke="url(#lineGrad)"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

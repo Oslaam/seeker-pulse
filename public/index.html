@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pulse — unofficial Seeker activity check</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/pulse-icon-32.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="assets/pulse-icon-192.png" />
+<link rel="apple-touch-icon" href="assets/pulse-icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="wordmark">
+      <img class="brand-mark" src="assets/pulse-mark.svg" alt="" aria-hidden="true" />
+      PULSE
+    </div>
+    <div class="topbar-sub">unofficial Seeker activity check</div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Where do you land today?</h1>
+      <p class="hero-sub">Enter your <code>.skr</code> domain or wallet address. We'll read your on-chain activity and estimate where you stand across Onchain Activity, dApp Exploration, and Daily Use.</p>
+
+      <form id="lookup-form" class="scan-form" autocomplete="off">
+        <div class="scan-input-wrap">
+          <input
+            id="lookup-input"
+            type="text"
+            placeholder="yourname.skr  or  wallet address"
+            spellcheck="false"
+            required
+          />
+          <button type="submit" id="scan-btn">
+            <span class="fingerprint" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2a7 7 0 0 0-7 7v2c0 3.5-1 6-2 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <path d="M12 2a7 7 0 0 1 7 7v2c0 1.2.15 2.3.4 3.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <path d="M8 20c1.3-1.8 2-4.2 2-7V9a2 2 0 1 1 4 0v6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <path d="M12 22c1.8-1.4 3-4 3-7V9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <path d="M5 13c0 3-.6 5.4-1.6 7.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="scan-btn-label">Scan</span>
+          </button>
+        </div>
+        <div id="domain-suggestions" class="domain-suggestions" role="listbox" aria-label="Matching .skr domains" hidden></div>
+        <div id="form-error" class="form-error" hidden></div>
+      </form>
+    </section>
+
+    <section id="result" class="result" hidden>
+
+      <div id="identity-banner" class="identity-banner"></div>
+
+      <div class="rings-grid" id="rings-grid"></div>
+
+      <div class="suggestions">
+        <h2>What to do next</h2>
+        <ul id="suggestions-list"></ul>
+      </div>
+
+      <div class="meta-row">
+        <div class="meta-item">
+          <span class="meta-label">Wallet</span>
+          <span class="meta-value mono" id="meta-address">—</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Resets in</span>
+          <span class="meta-value mono" id="meta-countdown">—</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="loading" class="loading" hidden>
+      <div class="scan-pulse"></div>
+      <p>Reading on-chain activity…</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Pulse is an unofficial, independent tool. Rings are estimates built from public on-chain data — not Solana Mobile's real Onchain Activity / dApp Exploration / Daily Use scores. Keep seeking 🫡</p>
+  </footer>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
