@@ -11,8 +11,10 @@ export interface ApiResponse {
   json(body: unknown): void;
 }
 
-const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
-const RPC_URL = process.env.RPC_URL || `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY || ""}`;
+const HELIUS_API_KEY = process.env.HELIUS_API_KEY?.trim();
+const RPC_URL = process.env.RPC_URL?.trim()
+  || process.env.HELIUS_RPC_URL?.trim()
+  || `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY || ""}`;
 
 function nextUtcResetIso(): string {
   const date = new Date();

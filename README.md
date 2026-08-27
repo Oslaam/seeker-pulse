@@ -83,8 +83,10 @@ This repository includes `vercel.json` with the correct deployment settings:
 In the Vercel project settings:
 
 1. Add `HELIUS_API_KEY` as an environment variable for the deployment environment.
-2. Keep the output directory set to `public`, not `build`.
-3. Redeploy the latest commit from the repository's `main` branch.
+2. Set its environment scope to **Production** (and **Preview** if you test preview deployments).
+3. Optionally add `RPC_URL` or `HELIUS_RPC_URL` if you use a custom Helius RPC endpoint.
+4. Keep the output directory set to `public`, not `build`.
+5. Redeploy after saving the variables. Environment changes do not apply to an existing deployment.
 
 The local Express server and Vercel functions share their handlers in
 `src/api.ts`.
