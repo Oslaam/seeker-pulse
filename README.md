@@ -2,7 +2,7 @@
 
 Unofficial daily activity checks for Solana Seeker and Seed Vault Wallet users.
 
-Enter a `.skr` domain or wallet address to see an estimated activity scorecard
+Enter a `.skr` domain to see an estimated activity scorecard
 for:
 
 - Onchain Activity

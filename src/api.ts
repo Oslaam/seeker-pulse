@@ -40,7 +40,7 @@ export async function domainSuggestions(request: ApiRequest, response: ApiRespon
 export async function lookup(request: ApiRequest, response: ApiResponse): Promise<void> {
   const query = typeof request.query?.q === "string" ? request.query.q : "";
   if (!query.trim()) {
-    response.status(400).json({ error: "Give me a .skr domain or a wallet address." });
+    response.status(400).json({ error: "Give me a .skr domain." });
     return;
   }
   if (!HELIUS_API_KEY) {

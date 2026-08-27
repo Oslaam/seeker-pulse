@@ -2,6 +2,20 @@ const MAX_PAGES = 3;
 const PAGE_SIZE = 100;
 const WINDOW_DAYS = 30;
 const NOISE_SOURCES = new Set(["SYSTEM_PROGRAM", "UNKNOWN", "SOLANA_PROGRAM_LIBRARY", "ASSOCIATED_TOKEN_ACCOUNT_PROGRAM", ""]);
+const configuredDustThreshold = Number(process.env.DUST_THRESHOLD);
+export const DUST_THRESHOLD = Number.isFinite(configuredDustThreshold) && configuredDustThreshold >= 0 ? configuredDustThreshold : 0.001;
+
+export interface DayAssessment {
+  date: string;
+  count: number;
+  repetitive: boolean;
+  bursty: boolean;
+  dustHeavy: boolean;
+  topRepeatedSource?: string;
+  topRepeatedCount?: number;
+  burstWindowStart?: string;
+  burstWindowCount?: number;
+}
 
 export interface Activity {
   todayCount: number;
@@ -10,6 +24,7 @@ export interface Activity {
   uniqueDapps: number;
   topSources: Array<{ source: string; count: number }>;
   windowDays: number;
+  recentDays: DayAssessment[];
 }
 
 class ActivityError extends Error {
@@ -23,6 +38,10 @@ interface Transaction {
   signature?: string;
   feePayer?: string;
   source?: string;
+  type?: string;
+  nativeTransfers?: Array<{ amount?: number }>;
+  tokenTransfers?: Array<{ tokenAmount?: number }>;
+  instructions?: Array<{ program?: string; programId?: string; type?: string }>;
 }
 
 function utcDateKey(unixSeconds: number): string {
@@ -59,17 +78,21 @@ export async function fetchActivity(address: string, apiKey: string): Promise<Ac
   return summarize(transactions.filter((transaction) => transaction.timestamp && transaction.timestamp >= cutoff), address);
 }
 
-function summarize(transactions: Transaction[], address: string): Activity {
+export function summarize(transactions: Transaction[], address: string): Activity {
   const todayKey = utcDateKey(Math.floor(Date.now() / 1000));
   const dayCounts = new Map<string, number>();
   const sourceCounts = new Map<string, number>();
   const sourceLastSeen = new Map<string, number>();
+  const transactionsByDay = new Map<string, Transaction[]>();
 
   for (const transaction of transactions) {
     if (transaction.feePayer && transaction.feePayer !== address) continue;
     if (!transaction.timestamp) continue;
     const key = utcDateKey(transaction.timestamp);
     dayCounts.set(key, (dayCounts.get(key) || 0) + 1);
+    const dayTransactions = transactionsByDay.get(key) || [];
+    dayTransactions.push(transaction);
+    transactionsByDay.set(key, dayTransactions);
     const source = (transaction.source || "UNKNOWN").toUpperCase();
     if (!NOISE_SOURCES.has(source)) {
       sourceCounts.set(source, (sourceCounts.get(source) || 0) + 1);
@@ -87,7 +110,67 @@ function summarize(transactions: Transaction[], address: string): Activity {
   }
 
   const topSources = [...sourceCounts.entries()].sort((a, b) => b[1] - a[1]).map(([source, count]) => ({ source: prettySourceName(source), count }));
-  return { todayCount: dayCounts.get(todayKey) || 0, activeDays: dayCounts.size, streak, uniqueDapps: sourceCounts.size, topSources, windowDays: WINDOW_DAYS };
+  const recentDays: DayAssessment[] = [];
+  const recentCursor = new Date();
+  recentCursor.setUTCHours(0, 0, 0, 0);
+  for (let day = 0; day < 7; day++) {
+    const date = recentCursor.toISOString().slice(0, 10);
+    recentDays.push(assessDay(date, transactionsByDay.get(date) || []));
+    recentCursor.setUTCDate(recentCursor.getUTCDate() - 1);
+  }
+  return { todayCount: dayCounts.get(todayKey) || 0, activeDays: dayCounts.size, streak, uniqueDapps: sourceCounts.size, topSources, windowDays: WINDOW_DAYS, recentDays };
+}
+
+function assessDay(date: string, transactions: Transaction[]): DayAssessment {
+  const groups = new Map<string, { source: string; count: number }>();
+  const timestamps = transactions.map((transaction) => transaction.timestamp).filter((timestamp): timestamp is number => typeof timestamp === "number").sort((a, b) => a - b);
+  let burstCount = 0;
+  let burstStart: number | undefined;
+  for (let start = 0; start < timestamps.length; start++) {
+    let end = start;
+    while (end < timestamps.length && timestamps[end] - timestamps[start] <= 5 * 60) end++;
+    if (end - start > burstCount) {
+      burstCount = end - start;
+      burstStart = timestamps[start];
+    }
+  }
+
+  let dustCount = 0;
+  for (const transaction of transactions) {
+    const source = programSource(transaction);
+    const amount = transferAmount(transaction);
+    if (amount !== undefined && amount < DUST_THRESHOLD) dustCount++;
+    const groupKey = `${source}|${instructionType(transaction)}|${amount === undefined ? "none" : roughAmount(amount)}`;
+    const group = groups.get(groupKey) || { source, count: 0 };
+    group.count++;
+    groups.set(groupKey, group);
+  }
+  const repeated = [...groups.values()].sort((a, b) => b.count - a.count)[0];
+  const repetitive = Boolean(repeated && repeated.count >= 3 && repeated.count / transactions.length > 0.6);
+  return { date, count: transactions.length, repetitive, bursty: burstCount >= 4, dustHeavy: transactions.length > 0 && dustCount / transactions.length >= 0.5, ...(repetitive && repeated ? { topRepeatedSource: repeated.source, topRepeatedCount: repeated.count } : {}), ...(burstCount >= 4 && burstStart !== undefined ? { burstWindowStart: new Date(burstStart * 1000).toISOString(), burstWindowCount: burstCount } : {}) };
+}
+
+function programSource(transaction: Transaction): string {
+  const instruction = transaction.instructions?.[0];
+  return (instruction?.program || instruction?.programId || transaction.source || "UNKNOWN").toUpperCase();
+}
+
+function instructionType(transaction: Transaction): string {
+  return (transaction.instructions?.[0]?.type || transaction.type || "UNKNOWN").toUpperCase();
+}
+
+function transferAmount(transaction: Transaction): number | undefined {
+  const amounts = [
+    ...(transaction.nativeTransfers || []).map((transfer) => typeof transfer.amount === "number" ? transfer.amount / 1_000_000_000 : undefined),
+    ...(transaction.tokenTransfers || []).map((transfer) => typeof transfer.tokenAmount === "number" ? transfer.tokenAmount : undefined),
+  ].filter((amount): amount is number => amount !== undefined);
+  return amounts.length > 0 ? Math.max(...amounts) : undefined;
+}
+
+function roughAmount(amount: number): string {
+  if (amount === 0 || Math.abs(amount) < DUST_THRESHOLD) return "dust";
+  const magnitude = 10 ** Math.floor(Math.log10(Math.abs(amount)) - 1);
+  return String(Math.round(amount / magnitude) * magnitude);
 }
 
 function prettySourceName(source: string): string {

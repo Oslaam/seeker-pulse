@@ -26,14 +26,14 @@
   <main>
     <section class="hero">
       <h1>Where do you land today?</h1>
-      <p class="hero-sub">Enter your <code>.skr</code> domain or wallet address. We'll read your on-chain activity and estimate where you stand across Onchain Activity, dApp Exploration, and Daily Use.</p>
+      <p class="hero-sub">Enter your <code>.skr</code> domain. We'll read your on-chain activity and estimate where you stand across Onchain Activity, dApp Exploration, and Daily Use.</p>
 
       <form id="lookup-form" class="scan-form" autocomplete="off">
         <div class="scan-input-wrap">
           <input
             id="lookup-input"
             type="text"
-            placeholder="yourname.skr  or  wallet address"
+            placeholder="yourname.skr"
             spellcheck="false"
             required
           />
@@ -58,6 +58,7 @@
     <section id="result" class="result" hidden>
 
       <div id="identity-banner" class="identity-banner"></div>
+      <div id="verdict-banner" class="verdict-banner" aria-live="polite"></div>
 
       <div class="rings-grid" id="rings-grid"></div>
 
@@ -85,7 +86,7 @@
   </main>
 
   <footer class="site-footer">
-    <p>Pulse is an unofficial, independent tool. Rings are estimates built from public on-chain data — not Solana Mobile's real Onchain Activity / dApp Exploration / Daily Use scores. Keep seeking 🫡</p>
+    <p>Pulse is an unofficial, independent tool. Pattern-based estimates use public on-chain data — not Solana Mobile's real scoring algorithm. Keep seeking 🫡</p>
   </footer>
 
   <script src="app.js" type="module"></script>

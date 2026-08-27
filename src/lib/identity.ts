@@ -35,7 +35,7 @@ export async function resolveIdentity(rawInput: string, rpcUrl: string): Promise
     try {
       address = new PublicKey(input).toString();
     } catch {
-      throw new IdentityError("INVALID_INPUT", "That doesn't look like a valid wallet address or .skr domain.");
+      throw new IdentityError("INVALID_INPUT", "That doesn't look like a valid wallet address from Seeker or .skr domain.");
     }
   }
 
