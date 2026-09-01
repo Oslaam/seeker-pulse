@@ -442,19 +442,27 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
+  position: relative;
 }
 
 .site-footer p {
   margin: 0;
 }
 
-.creator-line {
+.footer-signature {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.55rem;
   flex-wrap: wrap;
-  gap: 0.4rem;
   color: #dfe3ee;
+}
+
+.signature-label {
+  color: #9aa3b3;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .creator-link {
@@ -466,7 +474,7 @@ main {
   text-decoration: none;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #ffffff;
+  color: #fff;
   background: linear-gradient(135deg, #ff4d9a 0%, #8a5cff 34%, #29d9ff 100%);
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 10px 24px rgba(138, 92, 255, 0.32);
@@ -479,6 +487,31 @@ main {
   transform: translateY(-1px) scale(1.02);
   box-shadow: 0 14px 28px rgba(255, 77, 154, 0.25);
   filter: brightness(1.08);
+}
+
+.post-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+  color: #f7f8fb;
+  font-weight: 600;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.post-link:hover,
+.post-link:focus-visible {
+  outline: none;
+  transform: translateY(-1px);
+  border-color: rgba(41, 213, 255, 0.55);
+  background: rgba(41, 213, 255, 0.08);
 }
 
 @media (max-width: 600px) {
@@ -560,6 +593,22 @@ main {
 
   .site-footer {
     padding: 1.25rem 1rem 2rem;
+    gap: 0.55rem;
+  }
+
+  .footer-signature {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .signature-label {
+    font-size: 0.7rem;
+  }
+
+  .post-link,
+  .creator-link {
+    width: 100%;
+    max-width: 260px;
   }
 }
 
