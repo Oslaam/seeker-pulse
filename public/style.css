@@ -22,6 +22,8 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+[hidden] { display: none !important; }
+
 html { scroll-behavior: smooth; }
 
 body {
@@ -33,6 +35,8 @@ body {
   overflow-x: hidden;
   width: 100%;
   -webkit-font-smoothing: antialiased;
+  padding-top: 5.5rem;
+  padding-bottom: 4.5rem;
 }
 
 img, svg { max-width: 100%; }
@@ -40,13 +44,24 @@ img, svg { max-width: 100%; }
 a { color: inherit; }
 
 .topbar {
+  position: fixed;
+  z-index: 20;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
   padding: 1.5rem 1.75rem;
-  width: min(100%, 780px);
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 1.1rem max(1.75rem, calc((100vw - 780px) / 2 + 1.75rem));
+  background: linear-gradient(180deg, rgba(11, 12, 16, 0.96), rgba(11, 12, 16, 0.72) 72%, transparent);
+  pointer-events: none;
 }
+
+.topbar > * { pointer-events: auto; }
 
 .wordmark {
   font-family: var(--font-display);
@@ -159,6 +174,16 @@ main {
   text-align: left;
 }
 
+.agent-header { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 1.25rem; }
+.agent-avatar { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; flex: 0 0 2.5rem; border: 1px solid rgba(20, 241, 149, 0.36); border-radius: 12px; background: rgba(20, 241, 149, 0.1); box-shadow: 0 0 20px rgba(20, 241, 149, 0.1); }
+.agent-avatar img { width: 1.7rem; height: 1.7rem; }
+.agent-identity { display: grid; gap: 0.15rem; min-width: 0; }
+.agent-name-row { display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; }
+.agent-name { color: var(--text); font: 600 0.95rem var(--font-display); }
+.agent-status { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--verdict-aligned); font: 0.68rem var(--font-mono); }
+.agent-status i { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--verdict-aligned); box-shadow: 0 0 8px rgba(20, 241, 149, 0.7); }
+.agent-caption { color: var(--text-muted); font-size: 0.74rem; }
+
 .section-kicker {
   color: var(--grad-b);
   font: 0.7rem var(--font-mono);
@@ -166,20 +191,32 @@ main {
   text-transform: uppercase;
 }
 
-.dapp-chat h2 { margin: 0.35rem 0 0.35rem; font: 600 1.35rem var(--font-display); }
+.dapp-chat h2 { margin: 0.35rem 0 0.35rem; font: 600 1.5rem var(--font-display); }
 .dapp-chat-intro { color: var(--text-muted); line-height: 1.5; margin: 0 0 1rem; }
+.dapp-prompt-row { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.85rem; }
+.dapp-prompt { border: 1px solid var(--border); border-radius: 999px; padding: 0.45rem 0.7rem; background: rgba(255, 255, 255, 0.035); color: #cdd2de; cursor: pointer; font: 0.72rem var(--font-body); transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease; }
+.dapp-prompt:hover, .dapp-prompt:focus-visible { outline: none; border-color: rgba(20, 241, 149, 0.65); color: var(--verdict-aligned); background: rgba(20, 241, 149, 0.08); }
 .dapp-chat-form { display: flex; gap: 0.65rem; align-items: stretch; }
 .dapp-chat-form textarea { flex: 1; min-width: 0; resize: vertical; border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem; background: var(--bg); color: var(--text); font: 0.9rem var(--font-body); }
 .dapp-chat-form textarea:focus { outline: 2px solid var(--grad-b); outline-offset: 1px; }
 .dapp-chat-form button, .dapp-open-link { border: 0; border-radius: 10px; padding: 0.75rem 1rem; background: var(--grad-b); color: #07110d; cursor: pointer; font: 600 0.8rem var(--font-body); white-space: nowrap; text-decoration: none; }
+.dapp-chat-form button { display: inline-flex; align-items: center; justify-content: center; gap: 0.55rem; min-width: 8.5rem; }
 .dapp-chat-form button:disabled { cursor: wait; opacity: 0.6; }
 .dapp-chat-status { margin-top: 1rem; color: var(--text-muted); line-height: 1.5; }
+.dapp-chat-loading { display: flex; align-items: center; justify-content: center; gap: 0.7rem; min-height: 8rem; margin-top: 1rem; color: var(--text-muted); font: 0.78rem var(--font-mono); }
+.dapp-loader-ring { width: 3.5rem; height: 3.5rem; border: 3px solid rgba(20, 241, 149, 0.16); border-top-color: var(--grad-b); border-right-color: var(--grad-a); border-radius: 50%; animation: dapp-spin 0.9s linear infinite; box-shadow: 0 0 24px rgba(20, 241, 149, 0.12); }
+@keyframes dapp-spin { to { transform: rotate(360deg); } }
 .dapp-chat-results { display: grid; gap: 0.7rem; margin-top: 1rem; }
-.dapp-chat-card { border-top: 1px solid var(--border); padding-top: 0.9rem; }
-.dapp-chat-card h3 { margin: 0; font: 600 1rem var(--font-display); }
-.dapp-chat-card p { color: var(--text-muted); line-height: 1.45; margin: 0.35rem 0; }
-.dapp-chat-card .dapp-chat-reason { color: var(--text); font-size: 0.84rem; }
-.dapp-open-link { display: inline-block; margin-top: 0.5rem; }
+.dapp-chat-card { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 0.75rem; border-top: 1px solid var(--border); padding-top: 0.9rem; }
+.dapp-chat-icon { display: block; width: 3rem; height: 3rem; margin-bottom: 0.65rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); object-fit: cover; }
+.dapp-chat-card h3 { grid-column: 2; margin: 0; color: #ffffff; font: 600 1.08rem/1.25 var(--font-display); letter-spacing: 0.01em; }
+.dapp-chat-card p { grid-column: 2; color: #aeb6c7; font: 0.88rem/1.55 var(--font-body); margin: 0.4rem 0 0; }
+.dapp-chat-card .dapp-chat-reason { color: #e2e6ee; font-size: 0.82rem; line-height: 1.45; }
+.dapp-chat-metadata { grid-column: 2; display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.3rem; }
+.dapp-metadata-item { border: 1px solid var(--border); border-radius: 999px; padding: 0.25rem 0.55rem; color: #aeb6c7; font: 500 0.68rem var(--font-mono); letter-spacing: 0.01em; }
+.dapp-metadata-rating { border-color: rgba(255, 189, 74, 0.35); color: #ffcf73; background: rgba(255, 189, 74, 0.08); }
+.dapp-metadata-pulse { border-color: rgba(20, 241, 149, 0.35); color: #6ff5b7; background: rgba(20, 241, 149, 0.08); }
+.dapp-open-link { grid-column: 2; display: inline-block; justify-self: start; margin-top: 0.5rem; }
 .dapp-load-more { width: 100%; margin-top: 1rem; border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; background: var(--surface-2); color: var(--text); cursor: pointer; font: 600 0.8rem var(--font-body); }
 .dapp-load-more:hover, .dapp-load-more:focus-visible { outline: none; border-color: var(--grad-b); color: var(--grad-b); }
 .dapp-load-more:disabled { cursor: wait; opacity: 0.6; }
@@ -496,23 +533,31 @@ main {
 .meta-value.mono { font-family: var(--font-mono); font-size: 0.85rem; overflow-wrap: anywhere; }
 
 .site-footer {
+  position: fixed;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: min(100%, 780px);
+  max-width: none;
   margin: 0 auto;
-  padding: 1.5rem 1.75rem 3rem;
+  padding: 0.35rem max(1.75rem, calc((100vw - 780px) / 2 + 1.75rem)) 0.4rem;
   color: #565c6b;
   font-size: 0.78rem;
-  line-height: 1.6;
+  line-height: 1.2;
   text-align: center;
   overflow-wrap: anywhere;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: center;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.55rem;
   position: relative;
+  background: linear-gradient(0deg, rgba(11, 12, 16, 0.98), rgba(11, 12, 16, 0.78) 74%, transparent);
 }
 
 .site-footer p {
-  margin: 0;
+  display: none;
 }
 
 .footer-signature {
@@ -535,7 +580,7 @@ main {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.45rem 0.9rem;
+  padding: 0.25rem 0.65rem;
   border-radius: 999px;
   text-decoration: none;
   font-weight: 700;
@@ -565,7 +610,7 @@ main {
   font-weight: 600;
   font-size: 0.82rem;
   line-height: 1.4;
-  padding: 0.5rem 0.9rem;
+  padding: 0.25rem 0.65rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -585,16 +630,20 @@ main {
   .mode-toggle-button { flex: 1; min-width: 0; padding-inline: 0.55rem; }
   .dapp-chat { margin-top: 1rem; padding: 1rem; border-radius: 14px; }
   .dapp-chat h2 { font-size: 1.2rem; }
+  .dapp-chat-loading { min-height: 6.5rem; }
+  .dapp-loader-ring { width: 3rem; height: 3rem; }
   .topbar {
     align-items: flex-start;
     flex-direction: column;
     gap: 0.45rem;
-    padding: 1.25rem 1rem;
+    padding: 0.85rem 1rem;
   }
 
   main {
     padding: 1.5rem 1rem 3rem;
   }
+
+  body { padding-top: 5.25rem; padding-bottom: 5.5rem; }
 
   .hero {
     padding: 1.5rem 0 1rem;
@@ -662,12 +711,13 @@ main {
   .meta-item { flex: 1 1 9rem; }
 
   .site-footer {
-    padding: 1.25rem 1rem 2rem;
-    gap: 0.55rem;
+    padding: 0.35rem 0.65rem 0.4rem;
+    flex-direction: column;
+    gap: 0.3rem;
   }
 
   .footer-signature {
-    flex-direction: column;
+    flex-direction: row;
     gap: 0.35rem;
   }
 
@@ -675,11 +725,11 @@ main {
     font-size: 0.7rem;
   }
 
+  .footer-signature,
   .post-link,
-  .creator-link {
-    width: 100%;
-    max-width: 260px;
-  }
+  .creator-link { width: auto; max-width: none; }
+
+  .post-link { font-size: 0.72rem; }
 }
 
 @media (max-width: 380px) {

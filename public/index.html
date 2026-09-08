@@ -85,15 +85,31 @@
     </section>
 
     <section class="dapp-chat" id="dapp-chat" aria-labelledby="dapp-chat-title" hidden>
+      <div class="agent-header">
+        <div class="agent-avatar" aria-hidden="true"><img src="assets/pulse-mark.svg" alt="" /></div>
+        <div class="agent-identity">
+          <div class="agent-name-row"><span class="agent-name">Pulse Finder</span><span class="agent-status"><i></i> Online</span></div>
+          <span class="agent-caption">Your Seeker dApp guide</span>
+        </div>
+      </div>
       <div class="section-kicker">Catalog search</div>
-      <h2 id="dapp-chat-title">Ask what your Seeker can do.</h2>
-      <p class="dapp-chat-intro">Describe what you want to find. Recommendations come only from verified catalog records.</p>
+      <h2 id="dapp-chat-title">What are you looking for?</h2>
+      <p class="dapp-chat-intro">Ask naturally. I search the catalog and explain the closest matches.</p>
+      <div class="dapp-prompt-row" aria-label="Suggested questions">
+        <button class="dapp-prompt" type="button" data-prompt="I want to stake SKR">Stake SKR</button>
+        <button class="dapp-prompt" type="button" data-prompt="Show me NFT apps">Explore NFTs</button>
+        <button class="dapp-prompt" type="button" data-prompt="Where can I trade Solana tokens?">Trade tokens</button>
+      </div>
       <form id="dapp-chat-form" class="dapp-chat-form">
         <label class="sr-only" for="dapp-chat-input">Ask for a dApp recommendation</label>
         <textarea id="dapp-chat-input" rows="2" maxlength="500" placeholder="I need an app to stake SKR" required></textarea>
-        <button type="submit" id="dapp-chat-submit">Find dApps</button>
+        <button type="submit" id="dapp-chat-submit"><span>Find matches</span><span aria-hidden="true">&#8594;</span></button>
       </form>
       <div id="dapp-chat-status" class="dapp-chat-status" role="status" hidden></div>
+      <div id="dapp-chat-loading" class="dapp-chat-loading" role="status" aria-label="Finding dApp matches" hidden>
+        <div class="dapp-loader-ring" aria-hidden="true"></div>
+        <span>Finding matches</span>
+      </div>
       <div id="dapp-chat-results" class="dapp-chat-results" hidden></div>
       <button id="dapp-load-more" class="dapp-load-more" type="button" hidden>Load more dApps</button>
     </section>

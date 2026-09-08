@@ -3,7 +3,7 @@ interface Category { id: string; label: string; verdict: Verdict; detail: string
 interface Suggestion { text: string; }
 interface LookupData { address: string; skrDomain: string | null; isSeekerWallet: boolean; scorecard: { overallVerdict: Verdict; categories: Category[]; suggestions: Suggestion[] }; nextResetUtc: string; }
 interface DomainSuggestionResponse { domains: Array<{ domain: string | null; address: string }>; }
-interface DappRecommendation { dapp: { id: string; name: string; shortDescription: string | null; description: string | null; deepLink: string | null; iconUrl: string | null; pulseScore: number | null }; reason: string; relevance: number; }
+interface DappRecommendation { dapp: { id: string; name: string; shortDescription: string | null; description: string | null; deepLink: string | null; iconUrl: string | null; rating: number | null; reviewCount: number | null; pulseScore: number | null }; reason: string; relevance: number; }
 interface DappFinderResponse { answer: string; recommendations: DappRecommendation[]; }
 interface DappListResponse { dapps: DappRecommendation["dapp"][]; count: number; }
 
@@ -24,7 +24,9 @@ const dappChatForm = document.getElementById("dapp-chat-form") as HTMLFormElemen
 const dappChatInput = document.getElementById("dapp-chat-input") as HTMLTextAreaElement;
 const dappChatSubmit = document.getElementById("dapp-chat-submit") as HTMLButtonElement;
 const dappChatStatus = document.getElementById("dapp-chat-status") as HTMLDivElement;
+const dappChatLoading = document.getElementById("dapp-chat-loading") as HTMLDivElement;
 const dappChatResults = document.getElementById("dapp-chat-results") as HTMLDivElement;
+const dappPrompts = Array.from(document.querySelectorAll<HTMLButtonElement>(".dapp-prompt"));
 const dappChat = document.getElementById("dapp-chat") as HTMLElement;
 const dappLoadMore = document.getElementById("dapp-load-more") as HTMLButtonElement;
 const lookupMode = document.getElementById("lookup-mode") as HTMLButtonElement;
@@ -39,6 +41,10 @@ let suggestionRequestId = 0;
 lookupMode.addEventListener("click", () => setMode("lookup"));
 catalogMode.addEventListener("click", () => setMode("catalog"));
 dappLoadMore.addEventListener("click", loadMoreDapps);
+dappPrompts.forEach((prompt) => prompt.addEventListener("click", () => {
+  dappChatInput.value = prompt.dataset.prompt || "";
+  dappChatInput.focus();
+}));
 
 function setMode(mode: "lookup" | "catalog"): void {
   const catalogActive = mode === "catalog";
@@ -58,6 +64,7 @@ dappChatForm.addEventListener("submit", async (event) => {
   currentCatalogQuery = message;
   currentCatalogOffset = 0;
   dappChatSubmit.disabled = true;
+  dappChatLoading.hidden = false;
   dappChatStatus.hidden = false;
   dappChatStatus.textContent = "Searching the verified catalog…";
   dappChatResults.hidden = true;
@@ -69,6 +76,7 @@ dappChatForm.addEventListener("submit", async (event) => {
   } catch (error) {
     dappChatStatus.textContent = error instanceof Error ? error.message : "Recommendation search failed.";
   } finally {
+    dappChatLoading.hidden = true;
     dappChatSubmit.disabled = false;
   }
 });
@@ -201,11 +209,25 @@ function appendDappRecords(dapps: Array<DappRecommendation["dapp"] & { recommend
   for (const dapp of dapps) {
     const card = document.createElement("article");
     card.className = "dapp-chat-card";
+    if (dapp.iconUrl) {
+      const icon = document.createElement("img");
+      icon.className = "dapp-chat-icon";
+      icon.src = dapp.iconUrl;
+      icon.alt = `${dapp.name} logo`;
+      icon.loading = "lazy";
+      icon.addEventListener("error", () => icon.remove());
+      card.append(icon);
+    }
     const title = document.createElement("h3");
     title.textContent = dapp.name;
     const description = document.createElement("p");
     description.textContent = dapp.shortDescription || dapp.description || "No description available.";
     card.append(title, description);
+    const metadata = document.createElement("div");
+    metadata.className = "dapp-chat-metadata";
+    if (typeof dapp.rating === "number") metadata.append(metadataItem("Rating", `${dapp.rating.toFixed(1)}/5${typeof dapp.reviewCount === "number" ? ` (${dapp.reviewCount} reviews)` : ""}`));
+    if (typeof dapp.pulseScore === "number") metadata.append(metadataItem("Pulse", `${dapp.pulseScore}/100`));
+    if (metadata.childElementCount > 0) card.append(metadata);
     if (dapp.recommendationReason) {
       const reason = document.createElement("p");
       reason.className = "dapp-chat-reason";
@@ -221,4 +243,11 @@ function appendDappRecords(dapps: Array<DappRecommendation["dapp"] & { recommend
     }
     dappChatResults.append(card);
   }
+}
+
+function metadataItem(label: string, value: string): HTMLSpanElement {
+  const item = document.createElement("span");
+  item.className = `dapp-metadata-item dapp-metadata-${label.toLowerCase()}`;
+  item.textContent = `${label} ${value}`;
+  return item;
 }
