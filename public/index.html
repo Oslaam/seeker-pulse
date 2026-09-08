@@ -28,6 +28,11 @@
       <h1>Where do you land today?</h1>
       <p class="hero-sub">Enter your <code>.skr</code> domain. We'll read your on-chain activity and estimate where you stand across Onchain Activity, dApp Exploration, and Daily Use.</p>
 
+      <div class="mode-toggle" role="tablist" aria-label="Seeker Pulse mode">
+        <button class="mode-toggle-button active" id="lookup-mode" type="button" role="tab" aria-selected="true">Check .skr</button>
+        <button class="mode-toggle-button" id="catalog-mode" type="button" role="tab" aria-selected="false">Find dApps</button>
+      </div>
+
       <form id="lookup-form" class="scan-form" autocomplete="off">
         <div class="scan-input-wrap">
           <input
@@ -77,6 +82,20 @@
           <span class="meta-value mono" id="meta-countdown">—</span>
         </div>
       </div>
+    </section>
+
+    <section class="dapp-chat" id="dapp-chat" aria-labelledby="dapp-chat-title" hidden>
+      <div class="section-kicker">Catalog search</div>
+      <h2 id="dapp-chat-title">Ask what your Seeker can do.</h2>
+      <p class="dapp-chat-intro">Describe what you want to find. Recommendations come only from verified catalog records.</p>
+      <form id="dapp-chat-form" class="dapp-chat-form">
+        <label class="sr-only" for="dapp-chat-input">Ask for a dApp recommendation</label>
+        <textarea id="dapp-chat-input" rows="2" maxlength="500" placeholder="I need an app to stake SKR" required></textarea>
+        <button type="submit" id="dapp-chat-submit">Find dApps</button>
+      </form>
+      <div id="dapp-chat-status" class="dapp-chat-status" role="status" hidden></div>
+      <div id="dapp-chat-results" class="dapp-chat-results" hidden></div>
+      <button id="dapp-load-more" class="dapp-load-more" type="button" hidden>Load more dApps</button>
     </section>
 
     <section id="loading" class="loading" hidden>

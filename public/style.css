@@ -121,6 +121,70 @@ main {
   font-size: 0.9em;
 }
 
+.mode-toggle {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin: 0 auto 1.5rem;
+  padding: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.mode-toggle-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.6rem 1rem;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: 600 0.78rem var(--font-body);
+}
+
+.mode-toggle-button.active,
+.mode-toggle-button:hover,
+.mode-toggle-button:focus-visible {
+  outline: none;
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.dapp-chat {
+  margin: 2.5rem auto 0;
+  padding: 1.4rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(28, 31, 38, 0.94), rgba(21, 23, 28, 0.88));
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+  text-align: left;
+}
+
+.section-kicker {
+  color: var(--grad-b);
+  font: 0.7rem var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dapp-chat h2 { margin: 0.35rem 0 0.35rem; font: 600 1.35rem var(--font-display); }
+.dapp-chat-intro { color: var(--text-muted); line-height: 1.5; margin: 0 0 1rem; }
+.dapp-chat-form { display: flex; gap: 0.65rem; align-items: stretch; }
+.dapp-chat-form textarea { flex: 1; min-width: 0; resize: vertical; border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem; background: var(--bg); color: var(--text); font: 0.9rem var(--font-body); }
+.dapp-chat-form textarea:focus { outline: 2px solid var(--grad-b); outline-offset: 1px; }
+.dapp-chat-form button, .dapp-open-link { border: 0; border-radius: 10px; padding: 0.75rem 1rem; background: var(--grad-b); color: #07110d; cursor: pointer; font: 600 0.8rem var(--font-body); white-space: nowrap; text-decoration: none; }
+.dapp-chat-form button:disabled { cursor: wait; opacity: 0.6; }
+.dapp-chat-status { margin-top: 1rem; color: var(--text-muted); line-height: 1.5; }
+.dapp-chat-results { display: grid; gap: 0.7rem; margin-top: 1rem; }
+.dapp-chat-card { border-top: 1px solid var(--border); padding-top: 0.9rem; }
+.dapp-chat-card h3 { margin: 0; font: 600 1rem var(--font-display); }
+.dapp-chat-card p { color: var(--text-muted); line-height: 1.45; margin: 0.35rem 0; }
+.dapp-chat-card .dapp-chat-reason { color: var(--text); font-size: 0.84rem; }
+.dapp-open-link { display: inline-block; margin-top: 0.5rem; }
+.dapp-load-more { width: 100%; margin-top: 1rem; border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; background: var(--surface-2); color: var(--text); cursor: pointer; font: 600 0.8rem var(--font-body); }
+.dapp-load-more:hover, .dapp-load-more:focus-visible { outline: none; border-color: var(--grad-b); color: var(--grad-b); }
+.dapp-load-more:disabled { cursor: wait; opacity: 0.6; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
 .scan-form { max-width: 460px; margin: 0 auto; }
 
 .scan-input-wrap {
@@ -329,6 +393,8 @@ main {
 }
 
 @media (max-width: 600px) {
+  .dapp-chat-form { flex-direction: column; }
+  .dapp-chat-form button { width: 100%; }
   .rings-grid { grid-template-columns: 1fr; }
 }
 
@@ -515,6 +581,10 @@ main {
 }
 
 @media (max-width: 600px) {
+  .mode-toggle { display: flex; width: 100%; }
+  .mode-toggle-button { flex: 1; min-width: 0; padding-inline: 0.55rem; }
+  .dapp-chat { margin-top: 1rem; padding: 1rem; border-radius: 14px; }
+  .dapp-chat h2 { font-size: 1.2rem; }
   .topbar {
     align-items: flex-start;
     flex-direction: column;

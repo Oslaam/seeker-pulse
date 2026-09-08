@@ -3,6 +3,9 @@ interface Category { id: string; label: string; verdict: Verdict; detail: string
 interface Suggestion { text: string; }
 interface LookupData { address: string; skrDomain: string | null; isSeekerWallet: boolean; scorecard: { overallVerdict: Verdict; categories: Category[]; suggestions: Suggestion[] }; nextResetUtc: string; }
 interface DomainSuggestionResponse { domains: Array<{ domain: string | null; address: string }>; }
+interface DappRecommendation { dapp: { id: string; name: string; shortDescription: string | null; description: string | null; deepLink: string | null; iconUrl: string | null; pulseScore: number | null }; reason: string; relevance: number; }
+interface DappFinderResponse { answer: string; recommendations: DappRecommendation[]; }
+interface DappListResponse { dapps: DappRecommendation["dapp"][]; count: number; }
 
 const form = document.getElementById("lookup-form") as HTMLFormElement;
 const input = document.getElementById("lookup-input") as HTMLInputElement;
@@ -17,9 +20,80 @@ const suggestionsList = document.getElementById("suggestions-list") as HTMLUList
 const metaAddress = document.getElementById("meta-address") as HTMLElement;
 const metaCountdown = document.getElementById("meta-countdown") as HTMLElement;
 const domainSuggestions = document.getElementById("domain-suggestions") as HTMLDivElement;
+const dappChatForm = document.getElementById("dapp-chat-form") as HTMLFormElement;
+const dappChatInput = document.getElementById("dapp-chat-input") as HTMLTextAreaElement;
+const dappChatSubmit = document.getElementById("dapp-chat-submit") as HTMLButtonElement;
+const dappChatStatus = document.getElementById("dapp-chat-status") as HTMLDivElement;
+const dappChatResults = document.getElementById("dapp-chat-results") as HTMLDivElement;
+const dappChat = document.getElementById("dapp-chat") as HTMLElement;
+const dappLoadMore = document.getElementById("dapp-load-more") as HTMLButtonElement;
+const lookupMode = document.getElementById("lookup-mode") as HTMLButtonElement;
+const catalogMode = document.getElementById("catalog-mode") as HTMLButtonElement;
+let currentCatalogQuery = "";
+let currentCatalogOffset = 0;
+let catalogLoading = false;
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 let suggestionRequest: ReturnType<typeof setTimeout> | null = null;
 let suggestionRequestId = 0;
+
+lookupMode.addEventListener("click", () => setMode("lookup"));
+catalogMode.addEventListener("click", () => setMode("catalog"));
+dappLoadMore.addEventListener("click", loadMoreDapps);
+
+function setMode(mode: "lookup" | "catalog"): void {
+  const catalogActive = mode === "catalog";
+  lookupMode.classList.toggle("active", !catalogActive);
+  catalogMode.classList.toggle("active", catalogActive);
+  lookupMode.setAttribute("aria-selected", String(!catalogActive));
+  catalogMode.setAttribute("aria-selected", String(catalogActive));
+  form.hidden = catalogActive;
+  dappChat.hidden = !catalogActive;
+  if (catalogActive) dappChatInput.focus();
+}
+
+dappChatForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const message = dappChatInput.value.trim();
+  if (!message) return;
+  currentCatalogQuery = message;
+  currentCatalogOffset = 0;
+  dappChatSubmit.disabled = true;
+  dappChatStatus.hidden = false;
+  dappChatStatus.textContent = "Searching the verified catalog…";
+  dappChatResults.hidden = true;
+  try {
+    const response = await fetch("/api/ai/dapp-finder", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message }) });
+    const data = await response.json() as DappFinderResponse & { error?: string };
+    if (!response.ok) throw new Error(data.error || "Recommendation search failed.");
+    renderDappRecommendations(data);
+  } catch (error) {
+    dappChatStatus.textContent = error instanceof Error ? error.message : "Recommendation search failed.";
+  } finally {
+    dappChatSubmit.disabled = false;
+  }
+});
+
+async function loadMoreDapps(): Promise<void> {
+  if (catalogLoading || !currentCatalogQuery) return;
+  catalogLoading = true;
+  dappLoadMore.disabled = true;
+  dappLoadMore.textContent = "Loading…";
+  try {
+    const params = new URLSearchParams({ query: currentCatalogQuery, active: "true", seekerCompatible: "true", limit: "10", offset: String(currentCatalogOffset + 5), sort: "pulseScore" });
+    const response = await fetch(`/api/dapps?${params}`);
+    const data = await response.json() as DappListResponse & { error?: string };
+    if (!response.ok) throw new Error(data.error || "Could not load more dApps.");
+    appendDappRecords(data.dapps);
+    currentCatalogOffset += data.dapps.length;
+    dappLoadMore.hidden = data.dapps.length < 10;
+  } catch (error) {
+    dappChatStatus.textContent = error instanceof Error ? error.message : "Could not load more dApps.";
+  } finally {
+    catalogLoading = false;
+    dappLoadMore.disabled = false;
+    dappLoadMore.textContent = "Load more dApps";
+  }
+}
 
 input.addEventListener("input", () => scheduleDomainSuggestions(input.value));
 input.addEventListener("focus", () => scheduleDomainSuggestions(input.value));
@@ -110,3 +184,41 @@ function verdictLabel(verdict: Verdict): string { return verdict === "aligned" ?
 function renderSuggestions(suggestions: Suggestion[]): void { suggestionsList.innerHTML = ""; for (const suggestion of suggestions) { const item = document.createElement("li"); item.textContent = suggestion.text; suggestionsList.appendChild(item); } }
 function shortenAddress(address: string): string { return !address || address.length < 10 ? address : `${address.slice(0, 4)}…${address.slice(-4)}`; }
 function startCountdown(nextResetIso: string): void { if (countdownTimer) clearInterval(countdownTimer); const target = new Date(nextResetIso).getTime(); const tick = () => { const diff = target - Date.now(); if (diff <= 0) { metaCountdown.textContent = "resetting…"; if (countdownTimer) clearInterval(countdownTimer); return; } const hours = String(Math.floor(diff / 3_600_000)).padStart(2, "0"); const minutes = String(Math.floor((diff % 3_600_000) / 60_000)).padStart(2, "0"); const seconds = String(Math.floor((diff % 60_000) / 1000)).padStart(2, "0"); metaCountdown.textContent = `${hours}:${minutes}:${seconds} UTC`; }; tick(); countdownTimer = setInterval(tick, 1000); }
+function renderDappRecommendations(data: DappFinderResponse): void {
+  dappChatStatus.hidden = false;
+  dappChatStatus.textContent = data.answer;
+  dappChatResults.innerHTML = "";
+  if (data.recommendations.length === 0) {
+    dappChatResults.textContent = "No verified dApps are available yet.";
+  } else {
+    appendDappRecords(data.recommendations.map((recommendation) => ({ ...recommendation.dapp, recommendationReason: recommendation.reason })));
+  }
+  dappChatResults.hidden = false;
+  dappLoadMore.hidden = data.recommendations.length === 0;
+}
+
+function appendDappRecords(dapps: Array<DappRecommendation["dapp"] & { recommendationReason?: string }>): void {
+  for (const dapp of dapps) {
+    const card = document.createElement("article");
+    card.className = "dapp-chat-card";
+    const title = document.createElement("h3");
+    title.textContent = dapp.name;
+    const description = document.createElement("p");
+    description.textContent = dapp.shortDescription || dapp.description || "No description available.";
+    card.append(title, description);
+    if (dapp.recommendationReason) {
+      const reason = document.createElement("p");
+      reason.className = "dapp-chat-reason";
+      reason.textContent = dapp.recommendationReason;
+      card.append(reason);
+    }
+    if (dapp.deepLink) {
+      const link = document.createElement("a");
+      link.className = "dapp-open-link";
+      link.href = dapp.deepLink;
+      link.textContent = "Open in Seeker";
+      card.append(link);
+    }
+    dappChatResults.append(card);
+  }
+}

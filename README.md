@@ -98,6 +98,23 @@ The local Express server and Vercel functions share their handlers in
 | `npm run build` | Compile the server and browser TypeScript |
 | `npm start` | Build and start the local Express server |
 | `npm run dev` | Build and watch the local server |
+| `npm run sync:dapps` | Synchronize verified dApp records into PostgreSQL |
+| `npm run sync:dapps -- --dry-run` | Discover and validate dApps without database writes |
+
+## dApp catalog
+
+The dApp catalog is deliberately empty until a complete, free, public source
+can be verified. The official Solana Mobile documentation verifies the dApp
+Store publishing workflow and deep-link format, but the official publishing
+repository does not expose a documented public endpoint that enumerates every
+store listing. Seeker Pulse therefore does not ship guessed dApp records or
+package names. See [DAPP-CATALOG.md](DAPP-CATALOG.md) for the source analysis.
+
+Available catalog endpoints are:
+
+- `GET /api/dapps`
+- `GET /api/dapps/search`
+- `GET /api/dapps/:id`
 
 ## Project structure
 
