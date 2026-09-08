@@ -72,6 +72,8 @@ npm start
 
 Open <http://localhost:3000>.
 
+Production site: <https://seekerpulse.xyz/>.
+
 ## Vercel deployment
 
 This repository includes `vercel.json` with the correct deployment settings:

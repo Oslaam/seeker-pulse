@@ -86,10 +86,10 @@ import job.
 
 ## Cronjobs account refresh
 
-The protected Vercel endpoint is:
+The protected production endpoint is:
 
 ```text
-https://seeker-pulse.vercel.app/api/dapps-refresh
+https://seekerpulse.xyz/api/dapps-refresh
 ```
 
 Create a secret locally with PowerShell:
