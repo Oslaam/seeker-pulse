@@ -16,12 +16,29 @@
 <body>
 
   <header class="topbar">
+    <button class="menu-button" id="menu-button" type="button" aria-label="Open menu" aria-controls="site-sidebar" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="wordmark">
       <img class="brand-mark" src="assets/pulse-mark.svg" alt="" aria-hidden="true" />
       PULSE
     </div>
     <div class="topbar-sub">unofficial Seeker activity check</div>
   </header>
+
+  <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+  <aside class="site-sidebar" id="site-sidebar" aria-label="Site menu" aria-hidden="true">
+    <div class="sidebar-head"><span class="sidebar-title">Pulse menu</span><button class="sidebar-close" id="sidebar-close" type="button" aria-label="Close menu">&#10005;</button></div>
+    <nav class="sidebar-nav">
+      <a href="/">Home</a>
+      <button type="button" data-legal="privacy">Privacy</button>
+      <button type="button" data-legal="terms">Terms</button>
+      <button type="button" data-legal="copyright">Copyright</button>
+      <button type="button" data-legal="legal">Legal</button>
+    </nav>
+  </aside>
+
+  <section class="legal-panel" id="legal-panel" hidden aria-modal="true" role="dialog" aria-labelledby="legal-panel-title">
+    <div class="legal-panel-card"><button class="legal-panel-close" id="legal-panel-close" type="button" aria-label="Close legal information">&#10005;</button><div id="legal-panel-content"></div></div>
+  </section>
 
   <main>
     <section class="hero">
@@ -132,14 +149,9 @@
       See the original post
     </a>
 
-    <nav class="legal-links" aria-label="Legal links">
-      <a href="privacy.html">Privacy</a>
-      <a href="legal.html">Legal</a>
-      <a href="terms.html">Terms</a>
-      <a href="copyright.html">Copyright</a>
-    </nav>
   </footer>
 
   <script src="app.js" type="module"></script>
+  <script src="legal.js" type="module"></script>
 </body>
 </html>

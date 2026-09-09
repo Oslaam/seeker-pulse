@@ -23,6 +23,10 @@ const domainSuggestions = document.getElementById("domain-suggestions") as HTMLD
 const dappChatForm = document.getElementById("dapp-chat-form") as HTMLFormElement;
 const dappChatInput = document.getElementById("dapp-chat-input") as HTMLTextAreaElement;
 const dappChatSubmit = document.getElementById("dapp-chat-submit") as HTMLButtonElement;
+const menuButton = document.getElementById("menu-button") as HTMLButtonElement;
+const sidebar = document.getElementById("site-sidebar") as HTMLElement;
+const sidebarBackdrop = document.getElementById("sidebar-backdrop") as HTMLDivElement;
+const sidebarClose = document.getElementById("sidebar-close") as HTMLButtonElement;
 const dappChatStatus = document.getElementById("dapp-chat-status") as HTMLDivElement;
 const dappChatLoading = document.getElementById("dapp-chat-loading") as HTMLDivElement;
 const dappChatResults = document.getElementById("dapp-chat-results") as HTMLDivElement;
@@ -37,6 +41,19 @@ let catalogLoading = false;
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 let suggestionRequest: ReturnType<typeof setTimeout> | null = null;
 let suggestionRequestId = 0;
+
+menuButton.addEventListener("click", () => setSidebar(true));
+sidebarClose.addEventListener("click", () => setSidebar(false));
+sidebarBackdrop.addEventListener("click", () => setSidebar(false));
+sidebar.querySelector("a")?.addEventListener("click", () => setSidebar(false));
+
+function setSidebar(open: boolean): void {
+  sidebar.classList.toggle("open", open);
+  sidebar.setAttribute("aria-hidden", String(!open));
+  menuButton.setAttribute("aria-expanded", String(open));
+  sidebarBackdrop.hidden = !open;
+  document.body.classList.toggle("sidebar-open", open);
+}
 
 lookupMode.addEventListener("click", () => setMode("lookup"));
 catalogMode.addEventListener("click", () => setMode("catalog"));

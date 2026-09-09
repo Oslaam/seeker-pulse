@@ -5,7 +5,7 @@
   "type": "module",
   "main": "src/dist/server.js",
   "scripts": {
-    "build": "npx prisma generate && tsc -p tsconfig.json && tsc src/page/app.ts --target ES2020 --module ES2020 --lib ES2020,DOM --strict --skipLibCheck --outDir public",
+    "build": "npx prisma generate && tsc -p tsconfig.json && tsc src/page/app.ts --target ES2020 --module ES2020 --lib ES2020,DOM --strict --skipLibCheck --outDir public && tsc src/page/legal.tsx --target ES2020 --module ES2020 --lib ES2020,DOM --strict --skipLibCheck --outDir public",
     "rebuild": "npm rebuild",
     "start": "npm run build && node src/dist/server.js",
     "dev": "npm run build && node --watch src/dist/server.js",
