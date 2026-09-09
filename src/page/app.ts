@@ -41,7 +41,10 @@ let catalogLoading = false;
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 let suggestionRequest: ReturnType<typeof setTimeout> | null = null;
 let suggestionRequestId = 0;
-const apiBase = /Capacitor/i.test(navigator.userAgent) || window.location.protocol === "capacitor:"
+const isCapacitorApp = /Capacitor/i.test(navigator.userAgent)
+  || window.location.protocol === "capacitor:"
+  || window.location.hostname === "localhost";
+const apiBase = isCapacitorApp
   ? "https://seekerpulse.xyz"
   : "";
 
