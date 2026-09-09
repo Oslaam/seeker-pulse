@@ -41,6 +41,21 @@ let catalogLoading = false;
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 let suggestionRequest: ReturnType<typeof setTimeout> | null = null;
 let suggestionRequestId = 0;
+const apiBase = /Capacitor/i.test(navigator.userAgent) || window.location.protocol === "capacitor:"
+  ? "https://seekerpulse.xyz"
+  : "";
+
+function apiUrl(path: string): string {
+  return `${apiBase}${path}`;
+}
+
+async function readJson<T>(response: Response): Promise<T & { error?: string }> {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new Error(`The API returned a non-JSON response (HTTP ${response.status}). Check the hosted API URL.`);
+  }
+  return await response.json() as T & { error?: string };
+}
 
 menuButton.addEventListener("click", () => setSidebar(true));
 sidebarClose.addEventListener("click", () => setSidebar(false));
@@ -86,8 +101,8 @@ dappChatForm.addEventListener("submit", async (event) => {
   dappChatStatus.textContent = "Searching the verified catalog…";
   dappChatResults.hidden = true;
   try {
-    const response = await fetch("/api/ai/dapp-finder", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message }) });
-    const data = await response.json() as DappFinderResponse & { error?: string };
+    const response = await fetch(apiUrl("/api/ai/dapp-finder"), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message }) });
+    const data = await readJson<DappFinderResponse>(response);
     if (!response.ok) throw new Error(data.error || "Recommendation search failed.");
     renderDappRecommendations(data);
   } catch (error) {
@@ -105,8 +120,8 @@ async function loadMoreDapps(): Promise<void> {
   dappLoadMore.textContent = "Loading…";
   try {
     const params = new URLSearchParams({ query: currentCatalogQuery, active: "true", seekerCompatible: "true", limit: "10", offset: String(currentCatalogOffset + 5), sort: "pulseScore" });
-    const response = await fetch(`/api/dapps?${params}`);
-    const data = await response.json() as DappListResponse & { error?: string };
+    const response = await fetch(apiUrl(`/api/dapps?${params}`));
+    const data = await readJson<DappListResponse>(response);
     if (!response.ok) throw new Error(data.error || "Could not load more dApps.");
     appendDappRecords(data.dapps);
     currentCatalogOffset += data.dapps.length;
@@ -136,8 +151,8 @@ form.addEventListener("submit", async (event) => {
   const lookupQuery = normalizeLookupQuery(query);
   setLoading(true); formError.hidden = true; resultEl.hidden = true;
   try {
-    const response = await fetch(`/api/lookup?q=${encodeURIComponent(lookupQuery)}`);
-    const data = await response.json() as LookupData & { error?: string };
+    const response = await fetch(apiUrl(`/api/lookup?q=${encodeURIComponent(lookupQuery)}`));
+    const data = await readJson<LookupData>(response);
     if (!response.ok) throw new Error(data.error || "Lookup failed.");
     hideDomainSuggestions();
     render(data);
@@ -164,8 +179,8 @@ async function loadDomainSuggestions(value: string, requestId: number): Promise<
   }
 
   try {
-    const response = await fetch(`/api/domain-suggestions?name=${encodeURIComponent(normalized)}`);
-    const data = await response.json() as DomainSuggestionResponse;
+    const response = await fetch(apiUrl(`/api/domain-suggestions?name=${encodeURIComponent(normalized)}`));
+    const data = await readJson<DomainSuggestionResponse>(response);
     if (requestId !== suggestionRequestId || input.value.trim().toLowerCase().replace(/\.skr$/, "") !== normalized) return;
     renderDomainSuggestions(data.domains.map((suggestion) => suggestion.domain).filter((domain): domain is string => Boolean(domain)));
   } catch {
