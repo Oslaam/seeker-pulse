@@ -35,6 +35,8 @@ const dappChat = document.getElementById("dapp-chat") as HTMLElement;
 const dappLoadMore = document.getElementById("dapp-load-more") as HTMLButtonElement;
 const lookupMode = document.getElementById("lookup-mode") as HTMLButtonElement;
 const catalogMode = document.getElementById("catalog-mode") as HTMLButtonElement;
+const heroTitle = document.getElementById("hero-title") as HTMLElement;
+const heroSub = document.getElementById("hero-sub") as HTMLElement;
 let currentCatalogQuery = "";
 let currentCatalogOffset = 0;
 let catalogLoading = false;
@@ -89,7 +91,21 @@ function setMode(mode: "lookup" | "catalog"): void {
   catalogMode.setAttribute("aria-selected", String(catalogActive));
   form.hidden = catalogActive;
   dappChat.hidden = !catalogActive;
-  if (catalogActive) dappChatInput.focus();
+  resultEl.hidden = true;
+  formError.hidden = true;
+  loadingEl.hidden = true;
+  dappChatResults.hidden = true;
+  dappChatStatus.hidden = true;
+  dappLoadMore.hidden = true;
+  if (catalogActive) {
+    heroTitle.textContent = "What are you looking for?";
+    heroSub.textContent = "Describe the Seeker dApp you need and Pulse will search the verified catalog for relevant matches.";
+    dappChatInput.focus();
+  } else {
+    heroTitle.textContent = "Where do you land today?";
+    heroSub.innerHTML = "Enter your <code>.skr</code> domain. We'll read your on-chain activity and estimate where you stand across Onchain Activity, dApp Exploration, and Daily Use.";
+    input.focus();
+  }
 }
 
 dappChatForm.addEventListener("submit", async (event) => {

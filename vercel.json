@@ -1,4 +1,10 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "public"
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/privacy", "destination": "/legal.html" },
+    { "source": "/terms", "destination": "/legal.html" },
+    { "source": "/copyright", "destination": "/legal.html" },
+    { "source": "/legal", "destination": "/legal.html" }
+  ]
 }

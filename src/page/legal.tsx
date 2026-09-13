@@ -55,6 +55,17 @@ function renderLegal(key: LegalKey): void {
 }
 
 const panel = document.getElementById("legal-panel");
+const legalPage = document.getElementById("legal-page-content");
+const legalPath = window.location.pathname.replace(/^\//, "") as LegalKey;
+if (legalPage && content[legalPath]) {
+  const documentEl = h("article", { class: "legal-document" });
+  const data = content[legalPath];
+  documentEl.append(h("div", { class: "section-kicker" }, [text(data.label)]));
+  documentEl.append(h("h1", {}, [text(data.title)]));
+  documentEl.append(h("p", { class: "legal-updated" }, [text("Last updated: September 9, 2026")]));
+  data.sections.forEach((section) => documentEl.append(h("section", {}, [h("h2", {}, [text(section.title)]), h("p", {}, [text(section.body)])])));
+  legalPage.replaceChildren(documentEl);
+}
 document.querySelectorAll<HTMLButtonElement>("[data-legal]").forEach((button) => button.addEventListener("click", () => {
   renderLegal(button.dataset.legal as LegalKey);
   document.getElementById("site-sidebar")?.classList.remove("open");

@@ -85,6 +85,9 @@ a { color: inherit; }
 .sidebar-nav { display: grid; gap: 0.45rem; }
 .sidebar-nav a, .sidebar-nav button { display: block; width: 100%; padding: 0.8rem 0.75rem; border: 0; border-radius: 9px; background: transparent; color: #dce2ec; cursor: pointer; font: 0.9rem var(--font-body); text-align: left; text-decoration: none; }
 .sidebar-nav a:hover, .sidebar-nav a:focus-visible, .sidebar-nav button:hover, .sidebar-nav button:focus-visible { outline: none; color: var(--verdict-aligned); background: var(--surface-2); }
+.sidebar-attribution { display: grid; gap: 0.35rem; margin-top: 2rem; padding: 1.25rem 0.75rem 0; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.78rem; line-height: 1.45; }
+.sidebar-attribution a { color: var(--text); text-decoration: none; }
+.sidebar-attribution a:hover, .sidebar-attribution a:focus-visible { color: var(--verdict-aligned); }
 .legal-panel { position: fixed; z-index: 40; inset: 0; overflow: auto; padding: 6rem 1rem 3rem; background: rgba(7, 8, 11, 0.82); backdrop-filter: blur(8px); }
 .legal-panel-card { position: relative; width: min(100%, 48rem); margin: 0 auto; padding: 2rem; border: 1px solid var(--border); border-radius: 18px; background: #15171c; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4); }
 .legal-panel-close { position: absolute; top: 1rem; right: 1rem; width: 2rem; height: 2rem; }
@@ -92,6 +95,12 @@ a { color: inherit; }
 .legal-panel .legal-document h2 { margin: 0.35rem 0 0.25rem; color: #fff; font: 600 clamp(1.8rem, 5vw, 2.6rem)/1.1 var(--font-display); }
 .legal-panel .legal-document h3 { margin: 1.7rem 0 0.45rem; color: #fff; font: 600 1.05rem var(--font-display); }
 .legal-panel .legal-document p { margin: 0.5rem 0; color: #b8bfcd; font: 0.9rem/1.7 var(--font-body); }
+.legal-page { width: min(100%, 780px); margin: 0 auto; padding: 2.5rem 1.75rem 4rem; }
+.legal-page .legal-document { margin-top: 1.5rem; padding: 2rem; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); }
+.legal-page .legal-document h1 { margin: 0.35rem 0 0.25rem; color: #fff; font: 600 clamp(1.8rem, 5vw, 2.6rem)/1.1 var(--font-display); }
+.legal-page .legal-document h2 { margin: 1.7rem 0 0.45rem; color: #fff; font: 600 1.05rem var(--font-display); }
+.legal-page .legal-document p { margin: 0.5rem 0; color: #b8bfcd; font: 0.9rem/1.7 var(--font-body); }
+.back-link { color: var(--verdict-aligned); font: 0.85rem var(--font-mono); text-decoration: none; }
 
 .wordmark {
   font-family: var(--font-display);
