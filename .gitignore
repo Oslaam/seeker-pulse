@@ -20,6 +20,10 @@ yarn-error.log*
 
 # Capacitor / Android local and generated files
 android/local.properties
+android/keystore.properties
+*.jks
+*.keystore
+*.p12
 android/.gradle/
 android/**/build/
 android/capacitor-cordova-android-plugins/

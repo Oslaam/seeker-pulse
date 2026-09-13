@@ -1,5 +1,20 @@
 apply plugin: 'com.android.application'
 
+def signingProperties = new Properties()
+def signingPropertiesFile = rootProject.file('keystore.properties')
+if (signingPropertiesFile.exists()) {
+    signingPropertiesFile.withInputStream { signingProperties.load(it) }
+}
+
+def signingValue = { String propertyName, String environmentName ->
+    signingProperties.getProperty(propertyName) ?: System.getenv(environmentName)
+}
+
+def releaseStoreFile = signingValue('storeFile', 'SEEKER_PULSE_STORE_FILE')
+def releaseStorePassword = signingValue('storePassword', 'SEEKER_PULSE_STORE_PASSWORD')
+def releaseKeyAlias = signingValue('keyAlias', 'SEEKER_PULSE_KEY_ALIAS')
+def releaseKeyPassword = signingValue('keyPassword', 'SEEKER_PULSE_KEY_PASSWORD')
+
 android {
     namespace = "xyz.seekerpulse"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,11 +31,33 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword) {
+                storeFile rootProject.file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
     buildTypes {
         release {
+            if (releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+}
+
+gradle.taskGraph.whenReady { taskGraph ->
+    def releaseTaskRequested = taskGraph.allTasks.any { task ->
+        task.name.toLowerCase().contains('release')
+    }
+    if (releaseTaskRequested && !(releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword)) {
+        throw new GradleException('Release signing is not configured. Create android/keystore.properties from the documented template or set SEEKER_PULSE_STORE_FILE, SEEKER_PULSE_STORE_PASSWORD, SEEKER_PULSE_KEY_ALIAS, and SEEKER_PULSE_KEY_PASSWORD.')
     }
 }
 

@@ -72,6 +72,33 @@ npm start
 
 Open <http://localhost:3000>.
 
+## Android release APK
+
+The Solana Mobile dApp Store requires a signed release APK. Debug APKs such as
+`app-debug.apk` are not accepted.
+
+Create a release keystore locally from the repository root, then create
+`android/keystore.properties` from `android/keystore.properties.example` with
+your own values. Both the keystore and properties file are excluded from Git.
+
+```powershell
+keytool -genkeypair -v -keystore android/release.keystore -alias seeker-pulse -keyalg RSA -keysize 2048 -validity 10000
+Copy-Item android/keystore.properties.example android/keystore.properties
+```
+
+Fill in the passwords in `android/keystore.properties`, then build the signed
+release APK:
+
+```powershell
+npm run build
+npx cap copy android
+Push-Location android
+.\gradlew.bat assembleRelease
+Pop-Location
+```
+
+The upload artifact is `android/app/build/outputs/apk/release/app-release.apk`.
+
 Production site: <https://seekerpulse.xyz/>.
 
 ## Vercel deployment
