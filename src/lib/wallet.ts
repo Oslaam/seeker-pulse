@@ -27,7 +27,7 @@ function getAdapter(): SolanaMobileWalletAdapter {
       appIdentity: {
         name: "Seeker Pulse",
         uri: APP_URL,
-        icon: "/assets/pulse-icon-192.png",
+        icon: "/pulse-icon-512.png",
       },
       authorizationResultCache: createDefaultAuthorizationResultCache(),
       cluster: "mainnet-beta",
@@ -71,8 +71,8 @@ function waitForWalletConnection(wallet: SolanaMobileWalletAdapter): Promise<voi
     };
     const timeout = setTimeout(() => {
       cleanup();
-      reject(new Error("MWA authorization timed out before returning an account."));
-    }, 30_000);
+      reject(new Error(`MWA authorization timed out before returning an account (state: ${wallet.readyState}, connecting: ${wallet.connecting}).`));
+    }, 12_000);
     events.on("connect", onConnect);
     events.on("error", onError);
   });
@@ -83,6 +83,9 @@ export async function connectWallet(): Promise<ConnectedWallet> {
     throw new Error("Wallet connection is available in the Android app.");
   }
   const wallet = getAdapter();
+  if (wallet.readyState === "Unsupported") {
+    throw new Error("MWA is unsupported in this Android WebView. Reinstall the latest APK and verify it is running on Android.");
+  }
   if (!wallet.connected || !wallet.publicKey) {
     if (wallet.connected) await wallet.disconnect();
     const connection = waitForWalletConnection(wallet);
