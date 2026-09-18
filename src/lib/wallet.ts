@@ -27,7 +27,7 @@ function getAdapter(): SolanaMobileWalletAdapter {
       appIdentity: {
         name: "Seeker Pulse",
         uri: APP_URL,
-        icon: `${APP_URL}/assets/pulse-icon-192.png`,
+        icon: "/assets/pulse-icon-192.png",
       },
       authorizationResultCache: createDefaultAuthorizationResultCache(),
       cluster: "mainnet-beta",
@@ -45,22 +45,52 @@ export function walletAddress(): string | null {
   return getAdapter().publicKey?.toBase58() ?? null;
 }
 
+interface WalletEventSource {
+  on(event: "connect", listener: () => void): void;
+  on(event: "error", listener: (error: unknown) => void): void;
+  removeListener(event: "connect", listener: () => void): void;
+  removeListener(event: "error", listener: (error: unknown) => void): void;
+}
+
+function waitForWalletConnection(wallet: SolanaMobileWalletAdapter): Promise<void> {
+  if (wallet.publicKey) return Promise.resolve();
+  const events = wallet as unknown as WalletEventSource;
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      clearTimeout(timeout);
+      events.removeListener("connect", onConnect);
+      events.removeListener("error", onError);
+    };
+    const onConnect = () => {
+      cleanup();
+      resolve();
+    };
+    const onError = (error: unknown) => {
+      cleanup();
+      reject(error);
+    };
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error("MWA authorization timed out before returning an account."));
+    }, 30_000);
+    events.on("connect", onConnect);
+    events.on("error", onError);
+  });
+}
+
 export async function connectWallet(): Promise<ConnectedWallet> {
   if (!walletAvailable()) {
     throw new Error("Wallet connection is available in the Android app.");
   }
   const wallet = getAdapter();
-  try {
-    await wallet.autoConnect();
-  } catch {
-    // A missing or expired cached authorization should fall through to a fresh connection.
-  }
   if (!wallet.connected || !wallet.publicKey) {
     if (wallet.connected) await wallet.disconnect();
-    await wallet.connect();
+    const connection = waitForWalletConnection(wallet);
+    void wallet.connect();
+    await connection;
   }
   const address = wallet.publicKey?.toBase58();
-  if (!address) throw new Error("The wallet did not return an address.");
+  if (!address) throw new Error("MWA authorization returned no Solana account.");
   return { address };
 }
 
