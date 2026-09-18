@@ -50,8 +50,15 @@ export async function connectWallet(): Promise<ConnectedWallet> {
     throw new Error("Wallet connection is available in the Android app.");
   }
   const wallet = getAdapter();
-  await wallet.autoConnect();
-  if (!wallet.connected) await wallet.connect();
+  try {
+    await wallet.autoConnect();
+  } catch {
+    // A missing or expired cached authorization should fall through to a fresh connection.
+  }
+  if (!wallet.connected || !wallet.publicKey) {
+    if (wallet.connected) await wallet.disconnect();
+    await wallet.connect();
+  }
   const address = wallet.publicKey?.toBase58();
   if (!address) throw new Error("The wallet did not return an address.");
   return { address };

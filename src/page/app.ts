@@ -1,4 +1,5 @@
 import { connectWallet, disconnectWallet, signWalletMessage, walletAddress, walletAvailable } from "../lib/wallet.js";
+import { Capacitor } from "@capacitor/core";
 
 type Verdict = "aligned" | "watch" | "at_risk" | "idle";
 interface Category { id: string; label: string; verdict: Verdict; detail: string; value: number; unit: string; }
@@ -79,7 +80,8 @@ let catalogLoading = false;
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 let suggestionRequest: ReturnType<typeof setTimeout> | null = null;
 let suggestionRequestId = 0;
-const isCapacitorApp = /Capacitor/i.test(navigator.userAgent)
+const isCapacitorApp = Capacitor.getPlatform() === "android"
+  || /Capacitor/i.test(navigator.userAgent)
   || window.location.protocol === "capacitor:";
 const apiBase = isCapacitorApp
   ? "https://seekerpulse.xyz"
