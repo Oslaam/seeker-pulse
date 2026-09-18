@@ -3,6 +3,7 @@ import {
   createDefaultAddressSelector,
   createDefaultAuthorizationResultCache,
 } from "@solana-mobile/wallet-adapter-mobile";
+import { Capacitor } from "@capacitor/core";
 import bs58 from "bs58";
 
 const APP_URL = "https://seekerpulse.xyz";
@@ -14,7 +15,8 @@ export interface ConnectedWallet {
 let adapter: SolanaMobileWalletAdapter | null = null;
 
 function isAndroidCapacitor(): boolean {
-  return /Capacitor/i.test(navigator.userAgent)
+  return Capacitor.getPlatform() === "android"
+    || /Capacitor/i.test(navigator.userAgent)
     || window.location.protocol === "capacitor:";
 }
 
