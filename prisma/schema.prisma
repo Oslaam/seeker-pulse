@@ -136,3 +136,110 @@ model DappSyncLog {
   @@index([status])
   @@index([startedAt])
 }
+
+model Mission {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String
+  kind        String
+  category    String   @default("discovery")
+  target      Int      @default(1)
+  xp          Int      @default(10)
+  isActive    Boolean  @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  progress MissionProgress[]
+
+  @@index([isActive])
+  @@index([category])
+}
+
+model WalletUser {
+  id            String          @id @default(cuid())
+  walletAddress String          @unique
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  challenges    WalletChallenge[]
+  sessions      WalletSession[]
+  progress      MissionProgress[]
+  achievements  WalletAchievement[]
+}
+
+model WalletChallenge {
+  id            String      @id @default(cuid())
+  walletUserId  String
+  nonce         String      @unique
+  message       String
+  expiresAt     DateTime
+  usedAt        DateTime?
+  createdAt     DateTime    @default(now())
+
+  walletUser WalletUser @relation(fields: [walletUserId], references: [id], onDelete: Cascade)
+
+  @@index([walletUserId])
+  @@index([expiresAt])
+}
+
+model WalletSession {
+  id           String      @id @default(cuid())
+  walletUserId String
+  tokenHash    String      @unique
+  expiresAt    DateTime
+  createdAt    DateTime    @default(now())
+
+  walletUser WalletUser @relation(fields: [walletUserId], references: [id], onDelete: Cascade)
+
+  @@index([walletUserId])
+  @@index([expiresAt])
+}
+
+model MissionProgress {
+  id              String    @id @default(cuid())
+  walletAddress   String
+  walletUserId    String?
+  missionId       String
+  progress        Int       @default(0)
+  completedAt     DateTime?
+  proofSignature  String?
+  lastVerifiedAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  mission Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  walletUser WalletUser? @relation(fields: [walletUserId], references: [id], onDelete: Cascade)
+
+  @@unique([walletAddress, missionId])
+  @@index([walletAddress])
+  @@index([completedAt])
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String
+  kind        String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  awards WalletAchievement[]
+}
+
+model WalletAchievement {
+  id            String   @id @default(cuid())
+  walletAddress String
+  walletUserId  String?
+  achievementId String
+  awardedAt     DateTime @default(now())
+
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  walletUser WalletUser? @relation(fields: [walletUserId], references: [id], onDelete: Cascade)
+
+  @@unique([walletAddress, achievementId])
+  @@index([walletAddress])
+}

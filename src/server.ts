@@ -4,6 +4,9 @@ import cors from "cors";
 import path from "node:path";
 import { domainSuggestions, lookup } from "./api.js";
 import { findDapps, getDapp, listDapps } from "./api/dapps.js";
+import { skrBalance } from "./api/wallet.js";
+import { createWalletChallenge, verifyWalletChallenge } from "./api/auth.js";
+import { getMissionState } from "./api/missions.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +40,22 @@ app.get("/api/dapps/:id", async (req, res) => {
 
 app.post("/api/ai/dapp-finder", async (req, res) => {
   await findDapps(req, res);
+});
+
+app.get("/api/wallet/skr", async (req, res) => {
+  await skrBalance(req, res);
+});
+
+app.get("/api/auth/wallet", async (req, res) => {
+  await createWalletChallenge(req, res);
+});
+
+app.post("/api/auth/wallet", async (req, res) => {
+  await verifyWalletChallenge(req, res);
+});
+
+app.get("/api/missions", async (req, res) => {
+  await getMissionState(req, res);
 });
 
 app.listen(PORT, () => {

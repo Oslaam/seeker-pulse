@@ -1,5 +1,14 @@
 package xyz.seekerpulse;
 
-import com.getcapacitor.BridgeActivity;
+import android.os.Bundle;
 
-public class MainActivity extends BridgeActivity {}
+import com.getcapacitor.BridgeActivity;
+import com.solanamobile.capacitor.mwa.SolanaMWAPlugin;
+
+public class MainActivity extends BridgeActivity {
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		registerPlugin(SolanaMWAPlugin.class);
+		super.onCreate(savedInstanceState);
+	}
+}

@@ -22,7 +22,7 @@ export interface Activity {
   activeDays: number;
   streak: number;
   uniqueDapps: number;
-  topSources: Array<{ source: string; count: number }>;
+  topSources: Array<{ source: string; count: number; lastUsedAt: string }>;
   windowDays: number;
   recentDays: DayAssessment[];
 }
@@ -109,7 +109,7 @@ export function summarize(transactions: Transaction[], address: string): Activit
     cursor.setUTCDate(cursor.getUTCDate() - 1);
   }
 
-  const topSources = [...sourceCounts.entries()].sort((a, b) => b[1] - a[1]).map(([source, count]) => ({ source: prettySourceName(source), count }));
+  const topSources = [...sourceCounts.entries()].sort((a, b) => b[1] - a[1]).map(([source, count]) => ({ source: prettySourceName(source), count, lastUsedAt: new Date((sourceLastSeen.get(source) || 0) * 1000).toISOString() }));
   const recentDays: DayAssessment[] = [];
   const recentCursor = new Date();
   recentCursor.setUTCHours(0, 0, 0, 0);

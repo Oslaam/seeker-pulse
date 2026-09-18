@@ -10,7 +10,7 @@ const SUGGESTED_DAPPS = [
 export type Verdict = "aligned" | "watch" | "at_risk" | "idle";
 export interface ScoreCategory { id: "onchain" | "dapps" | "streak"; label: string; verdict: Verdict; detail: string; value: number; unit: string; }
 export interface Suggestion { category: string; text: string; }
-export interface Scorecard { overallVerdict: Verdict; categories: ScoreCategory[]; suggestions: Suggestion[]; }
+export interface Scorecard { overallVerdict: Verdict; pulseScore: number; categories: ScoreCategory[]; suggestions: Suggestion[]; }
 
 function pct(value: number, target: number): number { return Math.max(0, Math.min(100, Math.round((value / target) * 100))); }
 
@@ -39,7 +39,16 @@ export function buildScorecard(activity: Activity, alreadyUsedSources: string[] 
     suggestions.push({ category: "dapps", text: untried.length > 0 ? `You've touched the same ${activity.uniqueDapps} program${activity.uniqueDapps === 1 ? "" : "s"} all week — try something new: ${list}.` : "Your recent activity stays within a narrow set of programs — try something new that you actually want to use." });
   }
   if (onchainRisk && activity.streak > 1) suggestions.push({ category: "streak", text: "Your streak is intact, but it looks like it's being kept alive with minimal repeated transactions rather than varied use — worth mixing in some real activity." });
-  return { overallVerdict: idle ? "idle" : categories.some((category) => category.verdict === "at_risk") ? "at_risk" : categories.some((category) => category.verdict === "watch") ? "watch" : "aligned", categories, suggestions };
+  const overallVerdict = idle ? "idle" : categories.some((category) => category.verdict === "at_risk") ? "at_risk" : categories.some((category) => category.verdict === "watch") ? "watch" : "aligned";
+  return { overallVerdict, pulseScore: buildPulseScore(activity, onchainRisk, flaggedDays), categories, suggestions };
+}
+
+function buildPulseScore(activity: Activity, onchainRisk: boolean, flaggedDays: number): number {
+  const activityPoints = Math.min(30, activity.todayCount * 6);
+  const explorationPoints = Math.min(30, activity.uniqueDapps * 5);
+  const consistencyPoints = Math.min(25, activity.streak * 4) + Math.min(15, activity.activeDays);
+  const riskPenalty = (onchainRisk ? 25 : 0) + Math.min(15, flaggedDays * 3);
+  return Math.max(0, Math.min(100, activityPoints + explorationPoints + consistencyPoints - riskPenalty));
 }
 
 function onchainDetail(activity: Activity, verdict: Verdict): string {

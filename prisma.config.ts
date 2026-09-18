@@ -4,10 +4,17 @@ import { defineConfig } from "prisma/config";
 dotenv.config({ path: ".env.local" });
 dotenv.config({ path: ".env" });
 
+function cleanDatabaseUrl(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  return trimmed.startsWith('"') && trimmed.endsWith('"') ? trimmed.slice(1, -1) : trimmed;
+}
+
 const databaseUrl =
-  process.env.DATABASE_URL ??
-  process.env.POSTGRES_URL ??
-  process.env.PRISMA_DATABASE_URL;
+  cleanDatabaseUrl(process.env.DIRECT_URL) ??
+  cleanDatabaseUrl(process.env.POSTGRES_URL) ??
+  cleanDatabaseUrl(process.env.PRISMA_DATABASE_URL) ??
+  cleanDatabaseUrl(process.env.DATABASE_URL);
 
 if (!databaseUrl) {
   throw new Error(

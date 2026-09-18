@@ -1,5 +1,8 @@
 import { Connection, PublicKey } from "@solana/web3.js";
-import { TldParser } from "@onsol/tldparser";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const { TldParser } = require("@onsol/tldparser") as typeof import("@onsol/tldparser");
 
 const SKR_SUFFIX = ".skr";
 
@@ -43,18 +46,22 @@ export async function resolveIdentity(rawInput: string, rpcUrl: string): Promise
   return { address, skrDomain, isSeekerWallet: Boolean(skrDomain) };
 }
 
-async function findSkrDomainForOwner(parser: TldParser, address: string): Promise<string | null> {
+async function findSkrDomainForOwner(parser: InstanceType<typeof TldParser>, address: string): Promise<string | null> {
   const owner = new PublicKey(address);
-  for (const tld of ["skr", ".skr"]) {
+  try {
+    const domains = await parser.getParsedAllUserDomainsFromTld(owner, "skr");
+    return normalizeSkrDomain(domains[0]?.domain);
+  } catch {
     try {
-      const domains = await parser.getAllUserDomainsFromTld(owner, tld);
-      if (domains && domains.length > 0) {
-        const parsed = await parser.getParsedAllUserDomainsFromTld(owner, tld).catch(() => null);
-        return parsed?.[0]?.domain ? `${parsed[0].domain}${SKR_SUFFIX}` : SKR_SUFFIX;
-      }
+      const domains = await parser.getParsedAllUserDomainsFromTld(owner, ".skr");
+      return normalizeSkrDomain(domains[0]?.domain);
     } catch {
-      // Try the alternate TLD format.
+      return null;
     }
   }
-  return null;
+}
+
+function normalizeSkrDomain(domain: string | undefined): string | null {
+  if (!domain) return null;
+  return domain.toLowerCase().endsWith(SKR_SUFFIX) ? domain.toLowerCase() : `${domain.toLowerCase()}${SKR_SUFFIX}`;
 }

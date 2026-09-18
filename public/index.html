@@ -31,6 +31,14 @@
       <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Close menu">&#10005;</button>
     </div>
     <nav class="sidebar-nav">
+      <button class="wallet-connect-button" id="wallet-connect" type="button">
+        <span class="wallet-button-mark" aria-hidden="true">◈</span>
+        <span class="wallet-button-copy">
+          <strong id="wallet-connect-label">Connect wallet</strong>
+          <small id="wallet-connect-status"></small>
+        </span>
+        <span class="wallet-button-arrow" aria-hidden="true">›</span>
+      </button>
       <a href="/">Home</a>
       <a href="/privacy">Privacy</a>
       <a href="/terms">Terms</a>
@@ -54,8 +62,9 @@
       <p class="hero-sub" id="hero-sub">Enter your <code>.skr</code> domain. We'll read your on-chain activity and estimate where you stand across Onchain Activity, dApp Exploration, and Daily Use.</p>
 
       <div class="mode-toggle" role="tablist" aria-label="Seeker Pulse mode">
-        <button class="mode-toggle-button active" id="lookup-mode" type="button" role="tab" aria-selected="true">Check .skr</button>
-        <button class="mode-toggle-button" id="catalog-mode" type="button" role="tab" aria-selected="false">Find dApps</button>
+        <button class="mode-toggle-button active" id="pulse-mode" type="button" role="tab" aria-selected="true">Pulse</button>
+        <button class="mode-toggle-button" id="lookup-mode" type="button" role="tab" aria-selected="false">Check .skr</button>
+        <button class="mode-toggle-button" id="catalog-mode" type="button" role="tab" aria-selected="false">dApp Finder</button>
       </div>
 
       <form id="lookup-form" class="scan-form" autocomplete="off">
@@ -85,12 +94,80 @@
       </form>
     </section>
 
+    <section id="pulse-view" class="pulse-view">
+      <div class="pulse-welcome">
+        <div class="section-kicker">Your daily companion</div>
+        <h2 id="pulse-view-title">Connect to unlock My Pulse</h2>
+        <p id="pulse-view-intro">Connect your wallet from the menu to see your identity, activity, missions, and personalized next step.</p>
+      </div>
+      <div class="pulse-dashboard" id="pulse-dashboard" hidden>
+        <div class="pulse-dashboard-head">
+          <div>
+            <div class="section-kicker">My Pulse</div>
+            <h2 id="pulse-identity">Your Seeker</h2>
+          </div>
+          <span class="pulse-live-badge">Live</span>
+        </div>
+        <div class="pulse-score-panel pulse-score-primary">
+          <div><span class="meta-label">Pulse Score</span><strong id="pulse-dashboard-score">—</strong></div>
+          <p>Independent Pulse metric from verified public activity and Pulse signals.</p>
+        </div>
+        <div class="pulse-stat-grid">
+          <div><strong id="pulse-dashboard-today">—</strong><span>today</span></div>
+          <div><strong id="pulse-dashboard-streak">—</strong><span>day streak</span></div>
+          <div><strong id="pulse-dashboard-dapps">—</strong><span>dApps detected</span></div>
+          <div><strong id="pulse-dashboard-skr">—</strong><span>SKR balance</span></div>
+        </div>
+        <div class="today-panel">
+          <div class="section-kicker">Next move</div>
+          <h3>What should I do today?</h3>
+          <p id="pulse-today-action">—</p>
+        </div>
+        <div class="pulse-missions-summary">
+          <div class="section-kicker">Daily progress</div>
+          <h3>Today's Pulse</h3>
+          <ul id="pulse-mission-list" class="mission-list"></ul>
+        </div>
+        <div class="pulse-achievements-panel">
+          <div class="section-kicker">Verified progress</div>
+          <h3>Achievements</h3>
+          <div id="pulse-achievements" class="pulse-achievements"><span>Connect your wallet to load achievements.</span></div>
+        </div>
+        <div class="pulse-recommendations-panel">
+          <div class="section-kicker">Based on your activity</div>
+          <h3>Recommended for you</h3>
+          <div id="pulse-recommendations" class="pulse-recommendations"></div>
+        </div>
+      </div>
+    </section>
+
     <section id="result" class="result" hidden>
 
       <div id="identity-banner" class="identity-banner"></div>
       <div id="verdict-banner" class="verdict-banner" aria-live="polite"></div>
 
+      <div class="pulse-score-panel">
+        <div>
+          <span class="meta-label">Pulse Score</span>
+          <strong id="pulse-score">—</strong>
+        </div>
+        <p>Independent Pulse metric based on activity, exploration, consistency, and risk signals.</p>
+      </div>
+
+      <div class="missions-panel">
+        <div class="section-kicker">Today</div>
+        <h2>Seeker missions</h2>
+        <ul id="mission-list" class="mission-list"></ul>
+        <p class="mission-note">Progress is based on observed wallet activity and is not an official Solana Mobile reward.</p>
+      </div>
+
       <div class="rings-grid" id="rings-grid"></div>
+
+      <section class="detected-dapps-panel" aria-labelledby="detected-dapps-title">
+        <div class="section-kicker">Public activity</div>
+        <h2 id="detected-dapps-title">Detected dApps</h2>
+        <div id="detected-dapps"></div>
+      </section>
 
       <div class="suggestions">
         <h2>What to do next</h2>

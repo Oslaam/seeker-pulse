@@ -1,6 +1,7 @@
 import { resolveIdentity } from "./lib/identity.js";
 import { fetchActivity } from "./lib/activity.js";
 import { buildScorecard } from "./lib/scoring.js";
+import { detectDappsFromActivity } from "./lib/dapps/detected.js";
 
 export interface ApiRequest {
   query?: Record<string, unknown>;
@@ -52,7 +53,8 @@ export async function lookup(request: ApiRequest, response: ApiResponse): Promis
     const identity = await resolveIdentity(query, RPC_URL);
     const activity = await fetchActivity(identity.address, HELIUS_API_KEY);
     const scorecard = buildScorecard(activity, activity.topSources.map((source) => source.source));
-    response.json({ input: query, address: identity.address, skrDomain: identity.skrDomain, isSeekerWallet: identity.isSeekerWallet, activity, scorecard, nextResetUtc: nextUtcResetIso(), generatedAt: new Date().toISOString() });
+    const detectedDapps = await detectDappsFromActivity(activity.topSources).catch(() => []);
+    response.json({ input: query, address: identity.address, skrDomain: identity.skrDomain, isSeekerWallet: identity.isSeekerWallet, activity, detectedDapps, scorecard, nextResetUtc: nextUtcResetIso(), generatedAt: new Date().toISOString() });
   } catch (error) {
     const code = error instanceof Error && "code" in error && typeof error.code === "string" ? error.code : "";
     const status = ({ DOMAIN_NOT_FOUND: 404, INVALID_INPUT: 400, RATE_LIMITED: 429 } as Record<string, number>)[code] || 500;
