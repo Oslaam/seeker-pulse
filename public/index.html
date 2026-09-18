@@ -32,7 +32,7 @@
     </div>
     <nav class="sidebar-nav">
       <button class="wallet-connect-button" id="wallet-connect" type="button">
-        <span class="wallet-button-mark" aria-hidden="true">◈</span>
+        <span class="wallet-button-mark"><img src="assets/connectwallet.png" alt="" aria-hidden="true" /></span>
         <span class="wallet-button-copy">
           <strong id="wallet-connect-label">Connect wallet</strong>
           <small id="wallet-connect-status"></small>
@@ -45,6 +45,10 @@
       <a href="/copyright">Copyright</a>
       <a href="/legal">Legal</a>
     </nav>
+    <div class="sidebar-version">
+      <span>Version <strong id="app-version">v1.0.3</strong></span>
+      <button id="app-update" type="button" hidden>Update in dApp Store <span aria-hidden="true">&#8599;</span></button>
+    </div>
     <div class="sidebar-attribution">
       <span class="sidebar-attribution-label">A small Seeker utility by</span>
       <a class="sidebar-creator" href="https://x.com/oslaammanny" target="_blank" rel="noreferrer">OslaamManny <span aria-hidden="true">&#8599;</span></a>
@@ -62,7 +66,7 @@
       <p class="hero-sub" id="hero-sub">Enter your <code>.skr</code> domain. We'll read your on-chain activity and estimate where you stand across Onchain Activity, dApp Exploration, and Daily Use.</p>
 
       <div class="mode-toggle" role="tablist" aria-label="Seeker Pulse mode">
-        <button class="mode-toggle-button active" id="pulse-mode" type="button" role="tab" aria-selected="true">Pulse</button>
+        <button class="mode-toggle-button" id="pulse-mode" type="button" role="tab" aria-selected="false" hidden>Pulse</button>
         <button class="mode-toggle-button" id="lookup-mode" type="button" role="tab" aria-selected="false">Check .skr</button>
         <button class="mode-toggle-button" id="catalog-mode" type="button" role="tab" aria-selected="false">dApp Finder</button>
       </div>
@@ -94,7 +98,7 @@
       </form>
     </section>
 
-    <section id="pulse-view" class="pulse-view">
+    <section id="pulse-view" class="pulse-view" hidden>
       <div class="pulse-welcome">
         <div class="section-kicker">Your daily companion</div>
         <h2 id="pulse-view-title">Connect to unlock My Pulse</h2>
@@ -118,6 +122,11 @@
           <div><strong id="pulse-dashboard-dapps">—</strong><span>dApps detected</span></div>
           <div><strong id="pulse-dashboard-skr">—</strong><span>SKR balance</span></div>
         </div>
+        <div class="pulse-progress-panel">
+          <div class="pulse-progress-heading"><div><div class="section-kicker">Today's Pulse</div><h3>Daily progress</h3></div><strong id="pulse-progress-label">0 / 3</strong></div>
+          <div class="pulse-progress-track" aria-hidden="true"><span id="pulse-progress-bar"></span></div>
+          <p>Progress is based on connected-wallet state and observed public activity. Opening a screen never counts as an on-chain action.</p>
+        </div>
         <div class="today-panel">
           <div class="section-kicker">Next move</div>
           <h3>What should I do today?</h3>
@@ -127,6 +136,11 @@
           <div class="section-kicker">Daily progress</div>
           <h3>Today's Pulse</h3>
           <ul id="pulse-mission-list" class="mission-list"></ul>
+        </div>
+        <div class="pulse-recent-panel">
+          <div class="section-kicker">Recent activity</div>
+          <h3>Where your wallet has been active</h3>
+          <div id="pulse-recent-activity" class="pulse-recent-activity"></div>
         </div>
         <div class="pulse-achievements-panel">
           <div class="section-kicker">Verified progress</div>
@@ -166,6 +180,7 @@
       <section class="detected-dapps-panel" aria-labelledby="detected-dapps-title">
         <div class="section-kicker">Public activity</div>
         <h2 id="detected-dapps-title">Detected dApps</h2>
+        <div id="detected-categories" class="detected-categories"></div>
         <div id="detected-dapps"></div>
       </section>
 
@@ -198,6 +213,7 @@
       <h2 id="dapp-chat-title">What are you looking for?</h2>
       <p class="dapp-chat-intro">Ask naturally. I search the verified Seeker catalog and explain the closest matches.</p>
       <div class="dapp-prompt-row" aria-label="Suggested questions">
+        <button class="dapp-prompt" type="button" data-prompt="What can I do with SKR?">Use SKR</button>
         <button class="dapp-prompt" type="button" data-prompt="I want to stake SKR">Stake SKR</button>
         <button class="dapp-prompt" type="button" data-prompt="Show me NFT apps">Explore NFTs</button>
         <button class="dapp-prompt" type="button" data-prompt="Where can I trade Solana tokens?">Trade tokens</button>

@@ -4,11 +4,17 @@ type Verdict = "aligned" | "watch" | "at_risk" | "idle";
 interface Category { id: string; label: string; verdict: Verdict; detail: string; value: number; unit: string; }
 interface Suggestion { text: string; }
 interface DetectedDapp { dapp: { id: string; name: string; iconUrl: string | null; deepLink: string | null; categories: Array<{ name: string; slug: string }>; isVerified: boolean }; interactions: number; lastUsedAt: string; }
-interface LookupData { address: string; skrDomain: string | null; isSeekerWallet: boolean; detectedDapps: DetectedDapp[]; activity: { todayCount: number; streak: number; uniqueDapps: number }; scorecard: { overallVerdict: Verdict; pulseScore: number; categories: Category[]; suggestions: Suggestion[] }; nextResetUtc: string; }
+interface RecentSource { source: string; count: number; lastUsedAt: string; }
+interface LookupData { address: string; skrDomain: string | null; isSeekerWallet: boolean; detectedDapps: DetectedDapp[]; activity: { todayCount: number; streak: number; uniqueDapps: number; topSources: RecentSource[] }; scorecard: { overallVerdict: Verdict; pulseScore: number; categories: Category[]; suggestions: Suggestion[] }; nextResetUtc: string; }
 interface DomainSuggestionResponse { domains: Array<{ domain: string | null; address: string }>; }
 interface DappRecommendation { dapp: { id: string; name: string; shortDescription: string | null; description: string | null; deepLink: string | null; iconUrl: string | null; rating: number | null; reviewCount: number | null; pulseScore: number | null }; reason: string; relevance: number; }
 interface DappFinderResponse { answer: string; recommendations: DappRecommendation[]; }
 interface DappListResponse { dapps: DappRecommendation["dapp"][]; count: number; }
+interface VersionManifest { version: string; packageName: string; updateUrl: string; }
+
+const APP_VERSION = "1.0.3";
+const APP_PACKAGE_NAME = "xyz.seekerpulse";
+const APP_UPDATE_URL = `solanadappstore://details?id=${APP_PACKAGE_NAME}`;
 
 const form = document.getElementById("lookup-form") as HTMLFormElement;
 const input = document.getElementById("lookup-input") as HTMLInputElement;
@@ -22,6 +28,7 @@ const verdictBanner = document.getElementById("verdict-banner") as HTMLElement;
 const pulseScore = document.getElementById("pulse-score") as HTMLElement;
 const missionList = document.getElementById("mission-list") as HTMLUListElement;
 const detectedDapps = document.getElementById("detected-dapps") as HTMLElement;
+const detectedCategories = document.getElementById("detected-categories") as HTMLElement;
 const suggestionsList = document.getElementById("suggestions-list") as HTMLUListElement;
 const metaAddress = document.getElementById("meta-address") as HTMLElement;
 const metaCountdown = document.getElementById("meta-countdown") as HTMLElement;
@@ -40,6 +47,8 @@ const dappPrompts = Array.from(document.querySelectorAll<HTMLButtonElement>(".da
 const dappChat = document.getElementById("dapp-chat") as HTMLElement;
 const dappLoadMore = document.getElementById("dapp-load-more") as HTMLButtonElement;
 const walletConnect = document.getElementById("wallet-connect") as HTMLButtonElement;
+const appVersion = document.getElementById("app-version") as HTMLElement;
+const appUpdate = document.getElementById("app-update") as HTMLButtonElement;
 const walletConnectLabel = document.getElementById("wallet-connect-label") as HTMLElement;
 const walletConnectStatus = document.getElementById("wallet-connect-status") as HTMLElement;
 const pulseMode = document.getElementById("pulse-mode") as HTMLButtonElement;
@@ -59,6 +68,9 @@ const pulseDashboardDapps = document.getElementById("pulse-dashboard-dapps") as 
 const pulseDashboardSkr = document.getElementById("pulse-dashboard-skr") as HTMLElement;
 const pulseTodayAction = document.getElementById("pulse-today-action") as HTMLElement;
 const pulseMissionList = document.getElementById("pulse-mission-list") as HTMLUListElement;
+const pulseProgressLabel = document.getElementById("pulse-progress-label") as HTMLElement;
+const pulseProgressBar = document.getElementById("pulse-progress-bar") as HTMLElement;
+const pulseRecentActivity = document.getElementById("pulse-recent-activity") as HTMLElement;
 const pulseAchievements = document.getElementById("pulse-achievements") as HTMLElement;
 const pulseRecommendations = document.getElementById("pulse-recommendations") as HTMLElement;
 let currentCatalogQuery = "";
@@ -77,12 +89,39 @@ let connectedAddress: string | null = walletAddress();
 let connectedSkrDomain: string | null = null;
 let sessionToken = sessionStorage.getItem("seeker-pulse-session");
 
+appVersion.textContent = `v${APP_VERSION}`;
+appUpdate.addEventListener("click", () => { window.location.href = APP_UPDATE_URL; });
+
+function compareVersions(left: string, right: string): number {
+  const leftParts = left.split(".").map((part) => Number(part));
+  const rightParts = right.split(".").map((part) => Number(part));
+  for (let index = 0; index < 3; index++) {
+    const difference = (leftParts[index] || 0) - (rightParts[index] || 0);
+    if (difference !== 0) return difference;
+  }
+  return 0;
+}
+
+async function checkForAppUpdate(): Promise<void> {
+  if (!isCapacitorApp) return;
+  try {
+    const response = await fetch(`https://seekerpulse.xyz/version.json?t=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) return;
+    const manifest = await response.json() as VersionManifest;
+    if (manifest.packageName !== APP_PACKAGE_NAME || !manifest.version || compareVersions(manifest.version, APP_VERSION) <= 0) return;
+    appUpdate.hidden = false;
+    appUpdate.title = `Version ${manifest.version} is available`;
+  } catch {
+    // Update checks are best effort and must not block the app.
+  }
+}
+
 function apiUrl(path: string): string {
   return `${apiBase}${path}`;
 }
 
 function renderWalletButton(): void {
-  walletConnect.hidden = false;
+  walletConnect.hidden = !walletAvailable() && !connectedAddress;
   walletConnect.classList.toggle("connected", Boolean(connectedAddress));
   walletConnect.title = connectedAddress ? "Disconnect wallet" : "Connect wallet";
   walletConnect.setAttribute("aria-label", connectedAddress ? "Disconnect wallet" : "Connect wallet");
@@ -92,6 +131,13 @@ function renderWalletButton(): void {
   walletConnectStatus.textContent = connectedAddress
     ? shortenAddress(connectedAddress)
     : "";
+  syncPulseAvailability();
+}
+
+function syncPulseAvailability(): void {
+  const pulseAvailable = Boolean(connectedAddress && sessionToken);
+  pulseMode.hidden = !pulseAvailable;
+  if (!pulseAvailable && pulseMode.classList.contains("active")) setMode("lookup");
 }
 
 walletConnect.addEventListener("click", async () => {
@@ -104,7 +150,7 @@ walletConnect.addEventListener("click", async () => {
       sessionToken = null;
       sessionStorage.removeItem("seeker-pulse-session");
       pulseDashboard.hidden = true;
-      setMode("pulse");
+      setMode("lookup");
       renderWalletButton();
     } catch (error) {
       formError.textContent = error instanceof Error ? error.message : "Wallet disconnect failed.";
@@ -121,6 +167,7 @@ walletConnect.addEventListener("click", async () => {
     connectedAddress = wallet.address;
     await authenticateWallet(wallet.address);
     renderWalletButton();
+    setMode("pulse");
     setSidebar(false);
     input.value = wallet.address;
     form.requestSubmit();
@@ -154,8 +201,19 @@ async function loadMissionState(): Promise<void> {
   if (!sessionToken) return;
   try {
     const response = await fetch(apiUrl("/api/missions"), { headers: { Authorization: `Bearer ${sessionToken}` } });
-    const data = await readJson<{ achievements: Array<{ title: string; description: string; awardedAt: string }> }>(response);
+    const data = await readJson<{ missions: Array<{ title: string; description: string; target: number; progress: number; completedAt: string | null }>; achievements: Array<{ title: string; description: string; awardedAt: string }> }>(response);
     if (!response.ok) throw new Error(data.error || "Mission state unavailable.");
+    if (data.missions.length > 0) {
+      const completed = data.missions.filter((mission) => mission.completedAt).length;
+      pulseProgressLabel.textContent = `${completed} / ${data.missions.length}`;
+      pulseProgressBar.style.width = `${Math.round((completed / data.missions.length) * 100)}%`;
+      pulseMissionList.replaceChildren(...data.missions.map((mission) => {
+        const item = document.createElement("li");
+        item.className = mission.completedAt ? "mission-complete" : "";
+        item.textContent = `${mission.completedAt ? "✓" : "○"} ${mission.title}`;
+        return item;
+      }));
+    }
     pulseAchievements.replaceChildren();
     if (data.achievements.length === 0) {
       pulseAchievements.textContent = "Complete verified Pulse actions to unlock achievements.";
@@ -177,6 +235,7 @@ function escapeHtml(value: string): string {
 }
 
 renderWalletButton();
+void checkForAppUpdate();
 
 async function readJson<T>(response: Response): Promise<T & { error?: string }> {
   const contentType = response.headers.get("content-type") ?? "";
@@ -209,13 +268,14 @@ dappPrompts.forEach((prompt) => prompt.addEventListener("click", () => {
 }));
 
 function setMode(mode: "pulse" | "lookup" | "catalog"): void {
-  const pulseActive = mode === "pulse";
-  const catalogActive = mode === "catalog";
+  const pulseActive = mode === "pulse" && Boolean(connectedAddress && sessionToken);
+  const effectiveMode = pulseActive ? "pulse" : mode === "pulse" ? "lookup" : mode;
+  const catalogActive = effectiveMode === "catalog";
   pulseMode.classList.toggle("active", pulseActive);
-  lookupMode.classList.toggle("active", mode === "lookup");
+  lookupMode.classList.toggle("active", effectiveMode === "lookup");
   catalogMode.classList.toggle("active", catalogActive);
   pulseMode.setAttribute("aria-selected", String(pulseActive));
-  lookupMode.setAttribute("aria-selected", String(mode === "lookup"));
+  lookupMode.setAttribute("aria-selected", String(effectiveMode === "lookup"));
   catalogMode.setAttribute("aria-selected", String(catalogActive));
   pulseView.hidden = !pulseActive;
   form.hidden = pulseActive || catalogActive;
@@ -240,7 +300,7 @@ function setMode(mode: "pulse" | "lookup" | "catalog"): void {
   }
 }
 
-setMode("pulse");
+setMode(connectedAddress && sessionToken ? "pulse" : "lookup");
 
 dappChatForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -388,14 +448,20 @@ function renderPulseDashboard(data: LookupData): void {
   pulseDashboardStreak.textContent = String(data.activity.streak);
   pulseDashboardDapps.textContent = String(data.detectedDapps.length);
   pulseDashboardSkr.textContent = "...";
+  const missions = buildMissionState(data);
+  const completedMissions = missions.filter((mission) => mission.complete).length;
+  pulseProgressLabel.textContent = `${completedMissions} / ${missions.length}`;
+  pulseProgressBar.style.width = `${Math.round((completedMissions / missions.length) * 100)}%`;
+  pulseMissionList.replaceChildren(...renderMissionItems(missions));
+  renderRecentActivity(data.activity.topSources);
   void loadSkrBalance(data.address);
   const dappAction = data.detectedDapps.length === 0
     ? "Explore a verified app in dApp Finder to start building your ecosystem map."
     : `Explore ${data.detectedDapps[0].dapp.name} again, or discover a new verified app in dApp Finder.`;
   pulseTodayAction.textContent = data.activity.todayCount === 0 ? `Your Pulse is waiting for today's first meaningful action. ${dappAction}` : dappAction;
-  pulseMissionList.replaceChildren(...buildMissionItems(data));
   pulseRecommendations.textContent = "Loading verified matches...";
   void loadPersonalizedDapps(data.detectedDapps);
+  void loadMissionState();
 }
 
 async function loadPersonalizedDapps(usedDapps: DetectedDapp[]): Promise<void> {
@@ -455,13 +521,18 @@ function formatTokenBalance(value: string): string {
   return amount >= 1000 ? `${(amount / 1000).toFixed(1)}K` : amount.toFixed(2);
 }
 
-function buildMissionItems(data: LookupData): HTMLLIElement[] {
-  const categories = new Map(data.scorecard.categories.map((category) => [category.id, category]));
+interface MissionState { label: string; complete: boolean; }
+
+function buildMissionState(data: LookupData): MissionState[] {
   return [
-    { label: "Connect your wallet", complete: true },
-    { label: "Explore 2 protocols", complete: (categories.get("dapps")?.value ?? 0) >= 2 },
-    { label: "Keep a natural-use streak", complete: (categories.get("streak")?.value ?? 0) >= 1 },
-  ].map((mission) => {
+    { label: "Connect your wallet", complete: Boolean(connectedAddress && sessionToken) },
+    { label: "Explore a verified dApp", complete: data.detectedDapps.length > 0 },
+    { label: "Complete an on-chain activity", complete: data.activity.todayCount > 0 },
+  ];
+}
+
+function renderMissionItems(missions: MissionState[]): HTMLLIElement[] {
+  return missions.map((mission) => {
     const item = document.createElement("li");
     item.className = mission.complete ? "mission-complete" : "";
     item.textContent = `${mission.complete ? "✓" : "○"} ${mission.label}`;
@@ -469,8 +540,29 @@ function buildMissionItems(data: LookupData): HTMLLIElement[] {
   });
 }
 
+function renderRecentActivity(sources: RecentSource[]): void {
+  pulseRecentActivity.replaceChildren();
+  if (sources.length === 0) {
+    pulseRecentActivity.textContent = "No verified protocol activity was detected in the last 30 days.";
+    return;
+  }
+  for (const source of sources.slice(0, 4)) {
+    const item = document.createElement("div");
+    item.className = "pulse-recent-item";
+    const name = document.createElement("strong");
+    name.textContent = source.source;
+    const count = document.createElement("span");
+    count.textContent = `${source.count} interaction${source.count === 1 ? "" : "s"}`;
+    const lastUsed = document.createElement("small");
+    lastUsed.textContent = `Last active ${formatLastSeen(source.lastUsedAt)}`;
+    item.append(name, count, lastUsed);
+    pulseRecentActivity.append(item);
+  }
+}
+
 function renderDetectedDapps(records: DetectedDapp[]): void {
   detectedDapps.replaceChildren();
+  renderDetectedCategories(records);
   const list = document.createElement("div");
   list.className = "detected-dapp-list";
   if (records.length === 0) {
@@ -512,6 +604,41 @@ function renderDetectedDapps(records: DetectedDapp[]): void {
   note.className = "detected-dapp-note";
   note.textContent = "Detected from public transactions matched to verified Pulse catalog records. This is not a complete wallet history.";
   detectedDapps.append(list, note);
+}
+
+function renderDetectedCategories(records: DetectedDapp[]): void {
+  detectedCategories.replaceChildren();
+  const totals = new Map<string, { name: string; dapps: number; interactions: number }>();
+  for (const record of records) {
+    for (const category of record.dapp.categories) {
+      const current = totals.get(category.slug) || { name: category.name, dapps: 0, interactions: 0 };
+      current.dapps += 1;
+      current.interactions += record.interactions;
+      totals.set(category.slug, current);
+    }
+  }
+  const categories = [...totals.values()].sort((a, b) => b.interactions - a.interactions).slice(0, 4);
+  if (categories.length === 0) return;
+  const maxInteractions = categories[0].interactions;
+  const heading = document.createElement("p");
+  heading.className = "detected-category-heading";
+  heading.textContent = "Activity categories";
+  detectedCategories.append(heading);
+  for (const category of categories) {
+    const row = document.createElement("div");
+    row.className = "detected-category-row";
+    const label = document.createElement("strong");
+    label.textContent = category.name;
+    const meta = document.createElement("span");
+    meta.textContent = `${category.dapps} dApp${category.dapps === 1 ? "" : "s"} · ${category.interactions} interaction${category.interactions === 1 ? "" : "s"}`;
+    const track = document.createElement("div");
+    track.className = "detected-category-track";
+    const fill = document.createElement("span");
+    fill.style.width = `${Math.max(12, Math.round((category.interactions / maxInteractions) * 100))}%`;
+    track.append(fill);
+    row.append(label, meta, track);
+    detectedCategories.append(row);
+  }
 }
 
 function formatLastSeen(value: string): string {

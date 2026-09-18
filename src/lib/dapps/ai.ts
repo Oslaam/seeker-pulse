@@ -28,7 +28,9 @@ export function detectDappSearchIntent(message: string): DappSearchIntent {
     { pattern: /productivity|utility|tools/, intent: "productivity", categories: ["productivity"] },
   ];
 
-  const matched = intentByPattern.find((entry) => entry.pattern.test(text)) ?? { intent: "discovery", categories: ["utility"], pattern: /./ };
+  const matched = intentByPattern.find((entry) => entry.pattern.test(text)) ?? (assets.includes("SKR")
+    ? { intent: "skr_discovery", categories: ["defi", "wallet"], pattern: /skr/ }
+    : { intent: "discovery", categories: ["utility"], pattern: /./ });
   const keywords = Array.from(new Set([
     ...text.split(/[^a-z0-9]+/).filter((part) => part.length > 2 && !stopWords.has(part)),
     ...(matched.categories ?? []),
@@ -76,7 +78,7 @@ export function recommendDappsForMessage(message: string, dapps: Array<Partial<D
       if (assetMatch) relevance += 0.28;
       if (dapp.packageName) relevance += 0.03;
       const reason = matchedKeywords.length > 0
-        ? `Matches ${matchedKeywords.slice(0, 3).join(", ")} in the app metadata${assetMatch ? ` and mentions ${intent.assets.join(", ")}` : ""}.`
+        ? `Matches ${matchedKeywords.slice(0, 3).join(", ")} in verified app metadata${assetMatch ? ` and references ${intent.assets.join(", ")}` : ""}.`
         : `Matches the ${intent.intent} category.`;
       return { dappId: dapp.id ?? dapp.packageName ?? "unknown", reason, relevance: Math.min(0.99, relevance) };
     })
@@ -85,7 +87,9 @@ export function recommendDappsForMessage(message: string, dapps: Array<Partial<D
     .slice(0, intent.limit);
 
   const answer = ranked.length > 0
-    ? `I found ${ranked.length} candidate dApps that best match your ${intent.intent} request.`
+    ? intent.assets.includes("SKR")
+      ? `I found ${ranked.length} verified Seeker dApps with SKR-related metadata in the current catalog.`
+      : `I found ${ranked.length} candidate dApps that best match your ${intent.intent} request.`
     : `I could not find a strong match from the current catalog for that request.`;
 
   const result = { answer, recommendations: ranked.map((item) => ({ dappId: item.dappId, reason: item.reason, relevance: Number(item.relevance.toFixed(2)) })) };

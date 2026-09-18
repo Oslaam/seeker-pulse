@@ -21,17 +21,22 @@ export async function skrBalance(request: ApiRequest, response: ApiResponse): Pr
   }
 
   try {
-    const connection = new Connection(RPC_URL, "confirmed");
-    const accounts = await Promise.all(TOKEN_PROGRAMS.map((programId) => connection.getParsedTokenAccountsByOwner(owner, { programId })));
-    let balance = 0;
-    for (const result of accounts) {
-      for (const account of result.value) {
-        const info = account.account.data.parsed.info as { mint?: string; tokenAmount?: { uiAmountString?: string } };
-        if (info.mint === SKR_MINT) balance += Number(info.tokenAmount?.uiAmountString ?? 0);
-      }
-    }
-    response.json({ mint: SKR_MINT, balance: Number.isFinite(balance) ? balance.toString() : "0", readOnly: true });
+    const balance = await readSkrBalance(address, owner);
+    response.json({ mint: SKR_MINT, balance: balance.toString(), readOnly: true });
   } catch {
     response.status(503).json({ error: "SKR balance is temporarily unavailable." });
   }
+}
+
+export async function readSkrBalance(address: string, owner = new PublicKey(address)): Promise<number> {
+  const connection = new Connection(RPC_URL, "confirmed");
+  const accounts = await Promise.all(TOKEN_PROGRAMS.map((programId) => connection.getParsedTokenAccountsByOwner(owner, { programId })));
+  let balance = 0;
+  for (const result of accounts) {
+    for (const account of result.value) {
+      const info = account.account.data.parsed.info as { mint?: string; tokenAmount?: { uiAmountString?: string } };
+      if (info.mint === SKR_MINT) balance += Number(info.tokenAmount?.uiAmountString ?? 0);
+    }
+  }
+  return Number.isFinite(balance) ? balance : 0;
 }

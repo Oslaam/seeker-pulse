@@ -72,6 +72,12 @@ test('detectDappSearchIntent extracts staking and asset intent', () => {
   assert.ok(intent.categories.includes('defi'));
 });
 
+test('detectDappSearchIntent recognizes general SKR discovery', () => {
+  const intent = detectDappSearchIntent('What can I do with SKR?');
+  assert.equal(intent.intent, 'skr_discovery');
+  assert.ok(intent.assets.includes('SKR'));
+});
+
 test('recommendDappsForMessage returns structured recommendations', () => {
   const result = recommendDappsForMessage('I need an app to stake SKR', [sample]);
   assert.equal(result.answer.includes('staking') || result.answer.includes('SKR') || result.answer.length > 0, true);
@@ -86,6 +92,14 @@ test('recommendDappsForMessage prioritizes exact name and asset matches', () => 
   ]);
   assert.equal(results.recommendations[0].dappId, 'skr');
   assert.match(results.recommendations[0].reason, /SKR|stake/i);
+});
+
+test('recommendDappsForMessage labels SKR matches as verified metadata', () => {
+  const result = recommendDappsForMessage('What can I do with SKR?', [
+    { id: 'skr', name: 'SKR Staking', description: 'Stake SKR and track rewards', categories: ['defi'], tags: ['staking'], packageName: 'com.skr.staking' },
+  ]);
+  assert.match(result.answer, /verified.*SKR|SKR.*verified/i);
+  assert.match(result.recommendations[0].reason, /verified app metadata/i);
 });
 
 test('findCandidateDapps filters by text and categories', () => {
