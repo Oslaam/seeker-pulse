@@ -4,8 +4,12 @@ import { requireWalletSession } from "./auth.js";
 import { fetchActivity } from "../lib/activity.js";
 import { detectDappsFromActivity } from "../lib/dapps/detected.js";
 import { readSkrBalance } from "./wallet.js";
+import { buildJourneySummary } from "../lib/exploration.js";
 
-interface RequestLike { headers?: Record<string, string | string[] | undefined>; }
+interface RequestLike {
+  headers?: Record<string, string | string[] | undefined>;
+  body?: unknown;
+}
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY?.trim();
 
@@ -73,12 +77,79 @@ export async function getMissionState(request: RequestLike, response: ApiRespons
   } catch {
     // Keep the authenticated dashboard available if the activity provider is temporarily unavailable.
   }
-  const [missions, achievements] = await Promise.all([
+  const [missions, achievements, interactions] = await Promise.all([
     prisma.mission.findMany({ where: { isActive: true }, include: { progress: { where: { walletUserId: session.id } } }, orderBy: { createdAt: "asc" } }),
     prisma.walletAchievement.findMany({ where: { walletUserId: session.id }, include: { achievement: true }, orderBy: { awardedAt: "desc" } }),
+    prisma.walletDappInteraction.findMany({
+      where: { walletUserId: session.id },
+      include: { dapp: { include: { categories: { include: { category: true } } } } },
+      orderBy: { lastOpenedAt: "desc" },
+    }),
   ]);
+
+  const journey = buildJourneySummary(
+    interactions.map((interaction) => ({
+      dappId: interaction.dappId,
+      dappName: interaction.dapp.name,
+      category: interaction.dapp.categories[0]?.category.slug ?? "exploration",
+      firstOpenedAt: interaction.firstOpenedAt.toISOString(),
+      lastOpenedAt: interaction.lastOpenedAt.toISOString(),
+      openCount: interaction.openCount,
+    })),
+    new Date().toISOString(),
+  );
+
   response.json({
     missions: missions.map((mission) => ({ id: mission.id, slug: mission.slug, title: mission.title, description: mission.description, target: mission.target, xp: mission.xp, progress: mission.progress[0]?.progress ?? 0, completedAt: mission.progress[0]?.completedAt ?? null })),
     achievements: achievements.map((award) => ({ slug: award.achievement.slug, title: award.achievement.title, description: award.achievement.description, awardedAt: award.awardedAt })),
+    journey,
   });
+}
+
+export async function recordDappExploration(request: RequestLike, response: ApiResponse): Promise<void> {
+  const session = await requireWalletSession(request);
+  if (!session) {
+    response.status(401).json({ error: "A verified wallet session is required." });
+    return;
+  }
+
+  const body = request.body && typeof request.body === "object" ? request.body as Record<string, unknown> : {};
+  const dappId = typeof body.dappId === "string" ? body.dappId.trim() : "";
+  if (!dappId) {
+    response.status(400).json({ error: "A verified dApp id is required." });
+    return;
+  }
+
+  try {
+    const dapp = await prisma.dapp.findUnique({ where: { id: dappId }, include: { categories: { include: { category: true } } } });
+    if (!dapp) {
+      response.status(404).json({ error: "That dApp is not in the verified catalog." });
+      return;
+    }
+
+    const record = await prisma.walletDappInteraction.upsert({
+      where: { walletUserId_dappId: { walletUserId: session.id, dappId } },
+      update: {
+        lastOpenedAt: new Date(),
+        openCount: { increment: 1 },
+      },
+      create: {
+        walletUserId: session.id,
+        dappId,
+        firstOpenedAt: new Date(),
+        lastOpenedAt: new Date(),
+        openCount: 1,
+      },
+    });
+
+    response.json({
+      dappId: record.dappId,
+      openCount: record.openCount,
+      firstOpenedAt: record.firstOpenedAt,
+      lastOpenedAt: record.lastOpenedAt,
+      category: dapp.categories[0]?.category.slug ?? "exploration",
+    });
+  } catch {
+    response.status(503).json({ error: "The exploration tracker is temporarily unavailable." });
+  }
 }

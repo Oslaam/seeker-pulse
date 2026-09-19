@@ -39,6 +39,7 @@
         </span>
         <span class="wallet-button-arrow" aria-hidden="true">›</span>
       </button>
+      <button class="wallet-inline-button" id="use-connected-wallet-btn" type="button" hidden>Use connected wallet</button>
       <a href="/">Home</a>
       <a href="/privacy">Privacy</a>
       <a href="/terms">Terms</a>
@@ -63,7 +64,7 @@
   <main>
     <section class="hero">
       <h1 id="hero-title">Where do you land today?</h1>
-      <p class="hero-sub" id="hero-sub">Enter your <code>.skr</code> domain. We'll read your on-chain activity and estimate where you stand across Onchain Activity, dApp Exploration, and Daily Use.</p>
+      <p class="hero-sub" id="hero-sub">Check a <code>.skr</code> identity, discover a verified app, or connect your wallet for your daily Pulse.</p>
 
       <div class="mode-toggle" role="tablist" aria-label="Seeker Pulse mode">
         <button class="mode-toggle-button" id="pulse-mode" type="button" role="tab" aria-selected="false" hidden>Pulse</button>
@@ -128,17 +129,23 @@
           <p>Progress is based on connected-wallet state and observed public activity. Opening a screen never counts as an on-chain action.</p>
         </div>
         <div class="today-panel">
-          <div class="section-kicker">Next move</div>
+          <div class="section-kicker">Your next move</div>
           <h3>What should I do today?</h3>
           <p id="pulse-today-action">—</p>
+          <button class="primary-action" id="pulse-next-action" type="button">Discover a dApp <span aria-hidden="true">&#8594;</span></button>
+        </div>
+        <div class="pulse-journey-panel">
+          <div class="section-kicker">Your Seeker journey</div>
+          <h3>Exploration loop</h3>
+          <div id="pulse-journey" class="pulse-journey"></div>
         </div>
         <div class="pulse-missions-summary">
-          <div class="section-kicker">Daily progress</div>
-          <h3>Today's Pulse</h3>
+          <div class="section-kicker">Missions</div>
+          <h3>Build today's streak</h3>
           <ul id="pulse-mission-list" class="mission-list"></ul>
         </div>
         <div class="pulse-recent-panel">
-          <div class="section-kicker">Recent activity</div>
+          <div class="section-kicker">On-chain activity</div>
           <h3>Where your wallet has been active</h3>
           <div id="pulse-recent-activity" class="pulse-recent-activity"></div>
         </div>
@@ -237,6 +244,12 @@
       <p>Reading on-chain activity…</p>
     </section>
   </main>
+
+  <nav class="mobile-nav" aria-label="Primary navigation">
+    <button class="mobile-nav-button" id="mobile-pulse" type="button"><span aria-hidden="true">&#9673;</span><strong>Pulse</strong></button>
+    <button class="mobile-nav-button" id="mobile-lookup" type="button"><span aria-hidden="true">&#8981;</span><strong>Check .skr</strong></button>
+    <button class="mobile-nav-button" id="mobile-discover" type="button"><span aria-hidden="true">&#10022;</span><strong>Discover</strong></button>
+  </nav>
 
   <footer class="site-footer">
     <p>Pulse is an unofficial, independent tool. Pattern-based estimates use public on-chain data — not Solana Mobile's real scoring algorithm. Keep seeking 🫡</p>

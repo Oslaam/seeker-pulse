@@ -40,6 +40,7 @@ model Dapp {
   categories DappCategory[]
   tags       DappTag[]
   syncLogs   DappSyncLog[]
+  interactions WalletDappInteraction[]
 
   @@index([packageName])
   @@index([slug])
@@ -165,6 +166,7 @@ model WalletUser {
   updatedAt     DateTime        @updatedAt
   challenges    WalletChallenge[]
   sessions      WalletSession[]
+  interactions  WalletDappInteraction[]
   progress      MissionProgress[]
   achievements  WalletAchievement[]
 }
@@ -195,6 +197,24 @@ model WalletSession {
 
   @@index([walletUserId])
   @@index([expiresAt])
+}
+
+model WalletDappInteraction {
+  id            String   @id @default(cuid())
+  walletUserId  String
+  dappId        String
+  firstOpenedAt DateTime @default(now())
+  lastOpenedAt  DateTime @default(now())
+  openCount     Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  walletUser WalletUser @relation(fields: [walletUserId], references: [id], onDelete: Cascade)
+  dapp       Dapp       @relation(fields: [dappId], references: [id], onDelete: Cascade)
+
+  @@unique([walletUserId, dappId])
+  @@index([walletUserId, lastOpenedAt])
+  @@index([walletUserId, openCount])
 }
 
 model MissionProgress {

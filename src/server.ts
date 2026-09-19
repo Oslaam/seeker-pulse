@@ -6,7 +6,7 @@ import { domainSuggestions, lookup } from "./api.js";
 import { findDapps, getDapp, listDapps } from "./api/dapps.js";
 import { skrBalance } from "./api/wallet.js";
 import { createWalletChallenge, verifyWalletChallenge } from "./api/auth.js";
-import { getMissionState } from "./api/missions.js";
+import { getMissionState, recordDappExploration } from "./api/missions.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -56,6 +56,10 @@ app.post("/api/auth/wallet", async (req, res) => {
 
 app.get("/api/missions", async (req, res) => {
   await getMissionState(req, res);
+});
+
+app.post("/api/pulse/explore", async (req, res) => {
+  await recordDappExploration(req, res);
 });
 
 app.listen(PORT, () => {

@@ -1,6 +1,6 @@
 import type { DappRecord, DappSearchFilters } from "./types.js";
 
-export function findCandidateDapps<T extends { id?: string; name?: string; description?: string | null; categories?: string[]; tags?: string[]; developerName?: string | null; source?: string }>(
+export function findCandidateDapps<T extends { id?: string; name?: string; shortDescription?: string | null; description?: string | null; categories?: string[]; tags?: string[]; developerName?: string | null; source?: string }>(
   dapps: T[],
   filters: DappSearchFilters = {},
 ): T[] {
@@ -13,6 +13,7 @@ export function findCandidateDapps<T extends { id?: string; name?: string; descr
     .map((dapp) => {
       const haystack = [
         dapp.name ?? "",
+        dapp.shortDescription ?? "",
         dapp.description ?? "",
         dapp.developerName ?? "",
         ...(dapp.categories ?? []),

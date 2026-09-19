@@ -63,6 +63,8 @@ export async function syncDapps(provider: DappCatalogProvider, options: { dryRun
         website: dapp.website,
         packageName: dapp.packageName,
         releases: dapp.releases,
+        rating: dapp.rating,
+        reviewCount: dapp.reviewCount,
       });
 
       if (!options.dryRun) {
@@ -121,7 +123,7 @@ export async function syncDapps(provider: DappCatalogProvider, options: { dryRun
           summary.created += 1;
           summary.releases += (dapp.releases ?? []).length;
         } else {
-          const changed = current.name !== dapp.name || current.packageName !== dapp.packageName || current.status !== (dapp.status ?? "unknown") || current.isSeekerCompatible !== Boolean(dapp.isSeekerCompatible) || current.pulseScore !== pulseScore;
+          const changed = dappMetadataChanged(current, { ...data, pulseScore });
           if (changed) {
             await prisma.dapp.update({
               where: { id: current.id },
@@ -210,6 +212,15 @@ export async function syncDapps(provider: DappCatalogProvider, options: { dryRun
   }
 
   return summary;
+}
+
+export function dappMetadataChanged(current: Record<string, unknown>, next: Record<string, unknown>): boolean {
+  const fields = [
+    "name", "description", "shortDescription", "website", "iconUrl", "bannerUrl", "packageName",
+    "deepLink", "developerName", "developerWebsite", "status", "isActive", "isVerified",
+    "isSeekerCompatible", "rating", "reviewCount", "pulseScore", "sourceUrl", "metadataUri",
+  ];
+  return fields.some((field) => current[field] !== next[field]);
 }
 
 export function getDappSource(provider: DappCatalogProvider): string {

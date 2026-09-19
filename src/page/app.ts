@@ -1,4 +1,5 @@
 import { connectWallet, disconnectWallet, signWalletMessage, walletAddress, walletAvailable } from "../lib/wallet.js";
+import { shouldAutoFillLookupInput } from "../lib/ui-state.js";
 import { Capacitor } from "@capacitor/core";
 import { PublicKey } from "@solana/web3.js";
 
@@ -53,6 +54,7 @@ const appVersion = document.getElementById("app-version") as HTMLElement;
 const appUpdate = document.getElementById("app-update") as HTMLButtonElement;
 const walletConnectLabel = document.getElementById("wallet-connect-label") as HTMLElement;
 const walletConnectStatus = document.getElementById("wallet-connect-status") as HTMLElement;
+const useConnectedWalletBtn = document.getElementById("use-connected-wallet-btn") as HTMLButtonElement;
 const pulseMode = document.getElementById("pulse-mode") as HTMLButtonElement;
 const lookupMode = document.getElementById("lookup-mode") as HTMLButtonElement;
 const catalogMode = document.getElementById("catalog-mode") as HTMLButtonElement;
@@ -69,12 +71,17 @@ const pulseDashboardStreak = document.getElementById("pulse-dashboard-streak") a
 const pulseDashboardDapps = document.getElementById("pulse-dashboard-dapps") as HTMLElement;
 const pulseDashboardSkr = document.getElementById("pulse-dashboard-skr") as HTMLElement;
 const pulseTodayAction = document.getElementById("pulse-today-action") as HTMLElement;
+const pulseJourney = document.getElementById("pulse-journey") as HTMLElement;
 const pulseMissionList = document.getElementById("pulse-mission-list") as HTMLUListElement;
 const pulseProgressLabel = document.getElementById("pulse-progress-label") as HTMLElement;
 const pulseProgressBar = document.getElementById("pulse-progress-bar") as HTMLElement;
 const pulseRecentActivity = document.getElementById("pulse-recent-activity") as HTMLElement;
 const pulseAchievements = document.getElementById("pulse-achievements") as HTMLElement;
 const pulseRecommendations = document.getElementById("pulse-recommendations") as HTMLElement;
+const pulseNextAction = document.getElementById("pulse-next-action") as HTMLButtonElement;
+const mobilePulse = document.getElementById("mobile-pulse") as HTMLButtonElement;
+const mobileLookup = document.getElementById("mobile-lookup") as HTMLButtonElement;
+const mobileDiscover = document.getElementById("mobile-discover") as HTMLButtonElement;
 let currentCatalogQuery = "";
 let currentCatalogOffset = 0;
 let catalogLoading = false;
@@ -91,6 +98,7 @@ const apiBase = isCapacitorApp
 let connectedAddress: string | null = walletAddress();
 let connectedSkrDomain: string | null = null;
 let sessionToken = sessionStorage.getItem("seeker-pulse-session");
+let hasLookupResult = false;
 
 appVersion.textContent = `v${APP_VERSION}`;
 appUpdate.addEventListener("click", () => { window.location.href = APP_UPDATE_URL; });
@@ -134,6 +142,10 @@ function renderWalletButton(): void {
   walletConnectStatus.textContent = connectedAddress
     ? shortenAddress(connectedAddress)
     : "";
+  if (useConnectedWalletBtn) {
+    useConnectedWalletBtn.hidden = !connectedAddress;
+    useConnectedWalletBtn.disabled = !connectedAddress;
+  }
   syncPulseAvailability();
 }
 
@@ -173,8 +185,10 @@ walletConnect.addEventListener("click", async () => {
     renderWalletButton();
     setMode("pulse");
     setSidebar(false);
-    input.value = wallet.address;
-    form.requestSubmit();
+    if (shouldAutoFillLookupInput({ connectedAddress: wallet.address, explicitUserIntent: false })) {
+      input.value = wallet.address;
+      form.requestSubmit();
+    }
   } catch (error) {
     formError.textContent = error instanceof Error ? error.message : "Wallet connection failed.";
     formError.hidden = false;
@@ -205,7 +219,7 @@ async function loadMissionState(): Promise<void> {
   if (!sessionToken) return;
   try {
     const response = await fetch(apiUrl("/api/missions"), { headers: { Authorization: `Bearer ${sessionToken}` } });
-    const data = await readJson<{ missions: Array<{ title: string; description: string; target: number; progress: number; completedAt: string | null }>; achievements: Array<{ title: string; description: string; awardedAt: string }> }>(response);
+    const data = await readJson<{ missions: Array<{ title: string; description: string; target: number; progress: number; completedAt: string | null }>; achievements: Array<{ title: string; description: string; awardedAt: string }>; journey?: { weeklyExplorationCount: number; mostExplored: Array<{ dappId: string; name: string; count: number; category: string; lastOpenedAt: string }>; recentlyExplored: Array<{ dappId: string; name: string; label: string; category: string; lastOpenedAt: string }>; categories: Array<{ name: string; count: number; totalOpens: number }>; newDiscoveries: number; nextMove: string } }>(response);
     if (!response.ok) throw new Error(data.error || "Mission state unavailable.");
     if (data.missions.length > 0) {
       const completed = data.missions.filter((mission) => mission.completedAt).length;
@@ -217,6 +231,9 @@ async function loadMissionState(): Promise<void> {
         item.textContent = `${mission.completedAt ? "✓" : "○"} ${mission.title}`;
         return item;
       }));
+    }
+    if (data.journey) {
+      renderJourneySummary(data.journey);
     }
     pulseAchievements.replaceChildren();
     if (data.achievements.length === 0) {
@@ -265,7 +282,20 @@ function setSidebar(open: boolean): void {
  pulseMode.addEventListener("click", () => setMode("pulse"));
 lookupMode.addEventListener("click", () => setMode("lookup"));
 catalogMode.addEventListener("click", () => setMode("catalog"));
+mobilePulse.addEventListener("click", () => setMode("pulse"));
+mobileLookup.addEventListener("click", () => setMode("lookup"));
+mobileDiscover.addEventListener("click", () => setMode("catalog"));
+pulseNextAction.addEventListener("click", () => setMode("catalog"));
 dappLoadMore.addEventListener("click", loadMoreDapps);
+useConnectedWalletBtn?.addEventListener("click", () => {
+  if (!connectedAddress) return;
+  input.value = connectedAddress;
+  input.focus();
+  const explicitIntent = shouldAutoFillLookupInput({ connectedAddress, explicitUserIntent: true });
+  if (explicitIntent) {
+    form.requestSubmit();
+  }
+});
 dappPrompts.forEach((prompt) => prompt.addEventListener("click", () => {
   dappChatInput.value = prompt.dataset.prompt || "";
   dappChatInput.focus();
@@ -278,13 +308,16 @@ function setMode(mode: "pulse" | "lookup" | "catalog"): void {
   pulseMode.classList.toggle("active", pulseActive);
   lookupMode.classList.toggle("active", effectiveMode === "lookup");
   catalogMode.classList.toggle("active", catalogActive);
+  mobilePulse.classList.toggle("active", pulseActive);
+  mobileLookup.classList.toggle("active", effectiveMode === "lookup");
+  mobileDiscover.classList.toggle("active", catalogActive);
   pulseMode.setAttribute("aria-selected", String(pulseActive));
   lookupMode.setAttribute("aria-selected", String(effectiveMode === "lookup"));
   catalogMode.setAttribute("aria-selected", String(catalogActive));
   pulseView.hidden = !pulseActive;
   form.hidden = pulseActive || catalogActive;
   dappChat.hidden = !catalogActive;
-  resultEl.hidden = pulseActive || catalogActive;
+  resultEl.hidden = pulseActive || catalogActive || !hasLookupResult;
   formError.hidden = true;
   loadingEl.hidden = true;
   dappChatResults.hidden = true;
@@ -292,14 +325,14 @@ function setMode(mode: "pulse" | "lookup" | "catalog"): void {
   dappLoadMore.hidden = true;
   if (pulseActive) {
     heroTitle.textContent = connectedAddress ? "Your Seeker, in motion." : "Your daily Seeker companion.";
-    heroSub.textContent = connectedAddress ? "A clear view of your identity, activity, and next move across the Seeker ecosystem." : "Connect from the menu to unlock your personalized Pulse dashboard.";
+    heroSub.textContent = connectedAddress ? "A clear view of your identity, activity, and next move across the Seeker ecosystem." : "Connect your wallet to see your identity, today's progress, and your next move.";
   } else if (catalogActive) {
     heroTitle.textContent = "What are you looking for?";
     heroSub.textContent = "Describe the Seeker dApp you need and Pulse will search the verified catalog for relevant matches.";
     dappChatInput.focus();
   } else {
     heroTitle.textContent = "Where do you land today?";
-    heroSub.innerHTML = "Enter your <code>.skr</code> domain. We'll read your on-chain activity and estimate where you stand across Onchain Activity, dApp Exploration, and Daily Use.";
+    heroSub.innerHTML = "Check a <code>.skr</code> identity and explore a public Pulse readout. Your connected wallet stays separate.";
     input.focus();
   }
 }
@@ -442,6 +475,7 @@ function hideDomainSuggestions(): void {
 
 function setLoading(isLoading: boolean): void { loadingEl.hidden = !isLoading; scanBtn.disabled = isLoading; }
 function render(data: LookupData): void {
+  hasLookupResult = true;
   if (connectedAddress && data.address === connectedAddress) {
     connectedSkrDomain = data.skrDomain;
     renderWalletButton();
@@ -511,9 +545,25 @@ function renderPulseRecommendations(dapps: DappListResponse["dapps"]): void {
       link.href = dapp.deepLink;
       link.textContent = "Open";
       link.className = "pulse-recommendation-link";
+      link.addEventListener("click", () => {
+        void recordDappExploration(dapp.id);
+      });
       item.append(link);
     }
     pulseRecommendations.append(item);
+  }
+}
+
+async function recordDappExploration(dappId: string): Promise<void> {
+  if (!sessionToken || !dappId) return;
+  try {
+    await fetch(apiUrl("/api/pulse/explore"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionToken}` },
+      body: JSON.stringify({ dappId }),
+    });
+  } catch {
+    // Exploration tracking is best effort and must never disrupt the main UX.
   }
 }
 
@@ -555,7 +605,7 @@ function renderMissionItems(missions: MissionState[]): HTMLLIElement[] {
 function renderRecentActivity(sources: RecentSource[]): void {
   pulseRecentActivity.replaceChildren();
   if (sources.length === 0) {
-    pulseRecentActivity.textContent = "No verified protocol activity was detected in the last 30 days.";
+    pulseRecentActivity.textContent = "No verified protocol activity was detected in the last 30 days. This section tracks on-chain activity, not every app launch.";
     return;
   }
   for (const source of sources.slice(0, 4)) {
@@ -728,6 +778,9 @@ function appendDappRecords(dapps: Array<DappRecommendation["dapp"] & { recommend
       link.className = "dapp-open-link";
       link.href = dapp.deepLink;
       link.textContent = "Open in Seeker";
+      link.addEventListener("click", () => {
+        void recordDappExploration(dapp.id);
+      });
       card.append(link);
     }
     dappChatResults.append(card);
@@ -739,4 +792,35 @@ function metadataItem(label: string, value: string): HTMLSpanElement {
   item.className = `dapp-metadata-item dapp-metadata-${label.toLowerCase()}`;
   item.textContent = `${label} ${value}`;
   return item;
+}
+
+function renderJourneySummary(journey: { weeklyExplorationCount: number; mostExplored: Array<{ dappId: string; name: string; count: number; category: string; lastOpenedAt: string }>; recentlyExplored: Array<{ dappId: string; name: string; label: string; category: string; lastOpenedAt: string }>; categories: Array<{ name: string; count: number; totalOpens: number }>; newDiscoveries: number; nextMove: string }): void {
+  pulseJourney.replaceChildren();
+
+  const summary = document.createElement("div");
+  summary.className = "pulse-journey-summary";
+
+  const primary = document.createElement("div");
+  primary.className = "journey-primary";
+  primary.textContent = `${journey.weeklyExplorationCount} opens this week across ${journey.categories.length || 1} active lanes.`;
+
+  const meta = document.createElement("div");
+  meta.className = "journey-meta";
+  meta.textContent = `${journey.newDiscoveries} new discoveries · ${journey.recentlyExplored[0]?.name || "Fresh start"} most recent`;
+
+  const pills = document.createElement("div");
+  pills.className = "pulse-journey-row";
+  for (const item of journey.mostExplored.slice(0, 3)) {
+    const pill = document.createElement("span");
+    pill.className = "pulse-journey-pill";
+    pill.textContent = `${item.name} · ${item.count}`;
+    pills.append(pill);
+  }
+
+  const nextMove = document.createElement("div");
+  nextMove.className = "journey-meta";
+  nextMove.textContent = journey.nextMove;
+
+  summary.append(primary, meta);
+  pulseJourney.append(summary, pills, nextMove);
 }

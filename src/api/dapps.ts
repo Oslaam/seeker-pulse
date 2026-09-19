@@ -86,11 +86,10 @@ export async function findDapps(request: { body?: unknown }, response: ApiRespon
       tags: dapp.tags.map((tag) => tag.slug),
     })));
     const llmResponse = await explainDappRecommendations({ message, intent, candidates }).catch(() => null);
-    const candidateIds = new Set(candidates.map((candidate) => candidate.id));
-    const modelRecommendations = (llmResponse?.recommendations ?? []).filter((recommendation) => candidateIds.has(recommendation.dappId));
-    const recommendations = modelRecommendations.length > 0
-      ? { answer: llmResponse?.answer ?? deterministic.answer, recommendations: modelRecommendations }
-      : deterministic;
+    const recommendations = {
+      answer: llmResponse?.answer ?? deterministic.answer,
+      recommendations: deterministic.recommendations,
+    };
     const resolved = (await Promise.all(recommendations.recommendations.map(async (recommendation) => ({
       ...recommendation,
       dapp: await getDappById(recommendation.dappId),

@@ -8,6 +8,9 @@ import { detectDappSearchIntent, recommendDappsForMessage } from '../src/dist/li
 import { findCandidateDapps } from '../src/dist/lib/dapps/search.js';
 import { validateDiscoveredDapp } from '../src/dist/lib/dapps/validate.js';
 import { VerifiedSolanaMobileCatalogProvider } from '../src/dist/lib/dapps/discovery.js';
+import { shouldAutoFillLookupInput } from '../src/dist/lib/ui-state.js';
+import { buildJourneySummary } from '../src/dist/lib/exploration.js';
+import { dappMetadataChanged } from '../src/dist/lib/dapps/sync.js';
 
 const sample = {
   source: 'official-seed',
@@ -94,6 +97,15 @@ test('recommendDappsForMessage prioritizes exact name and asset matches', () => 
   assert.match(results.recommendations[0].reason, /SKR|stake/i);
 });
 
+test('recommendDappsForMessage uses full descriptions and related word forms', () => {
+  const results = recommendDappsForMessage('I want something for liquid staking', [
+    { id: 'generic', name: 'Wallet Hub', description: 'A general wallet for Solana', categories: ['wallet'], tags: ['wallet'], packageName: 'com.generic.app' },
+    { id: 'liquid', name: 'Waterfall', description: 'Liquid staking with automated rewards', categories: ['defi'], tags: ['staking'], packageName: 'com.liquid.app' },
+  ]);
+  assert.equal(results.recommendations[0].dappId, 'liquid');
+  assert.match(results.recommendations[0].reason, /liquid|staking/i);
+});
+
 test('recommendDappsForMessage labels SKR matches as verified metadata', () => {
   const result = recommendDappsForMessage('What can I do with SKR?', [
     { id: 'skr', name: 'SKR Staking', description: 'Stake SKR and track rewards', categories: ['defi'], tags: ['staking'], packageName: 'com.skr.staking' },
@@ -110,4 +122,39 @@ test('findCandidateDapps filters by text and categories', () => {
   const results = findCandidateDapps(dapps, { query: 'staking', category: 'wallet', limit: 10 });
   assert.equal(results.length, 1);
   assert.equal(results[0].id, '1');
+});
+
+test('findCandidateDapps searches name, subtitle, and full description', () => {
+  const results = findCandidateDapps([
+    { id: 'subtitle', name: 'Orbit', shortDescription: 'Liquid staking', description: 'A simple Solana app', categories: ['defi'], tags: [] },
+    { id: 'description', name: 'Harbor', shortDescription: 'A wallet', description: 'Track NFT collections and floor prices', categories: ['nft'], tags: [] },
+  ], { query: 'liquid staking', limit: 10 });
+  assert.equal(results[0].id, 'subtitle');
+  assert.equal(findCandidateDapps([{ id: 'description', name: 'Harbor', shortDescription: 'A wallet', description: 'Track NFT collections and floor prices', categories: [], tags: [] }], { query: 'floor prices', limit: 10 })[0].id, 'description');
+});
+
+test('catalog sync detects changed reviews and descriptions', () => {
+  assert.equal(dappMetadataChanged({ rating: 4.1, reviewCount: 8, description: 'Old copy' }, { rating: 4.6, reviewCount: 19, description: 'New copy' }), true);
+  assert.equal(dappMetadataChanged({ rating: 4.1, reviewCount: 8, description: 'Same copy' }, { rating: 4.1, reviewCount: 8, description: 'Same copy' }), false);
+});
+
+test('connected wallet state does not auto-fill the public .skr lookup input', () => {
+  assert.equal(shouldAutoFillLookupInput({ connectedAddress: 'CfRjo855LvAWcviiiq7DdcLz9i5Xqy8Vvnmh95UnL9Ua', explicitUserIntent: false }), false);
+  assert.equal(shouldAutoFillLookupInput({ connectedAddress: 'CfRjo855LvAWcviiiq7DdcLz9i5Xqy8Vvnmh95UnL9Ua', explicitUserIntent: true }), true);
+  assert.equal(shouldAutoFillLookupInput({ connectedAddress: null, explicitUserIntent: false }), false);
+});
+
+test('journey summary distinguishes opened and explored app activity from on-chain detection', () => {
+  const summary = buildJourneySummary([
+    { dappId: 'alpha', dappName: 'Alpha Swap', category: 'defi', firstOpenedAt: '2026-09-10T14:00:00.000Z', lastOpenedAt: '2026-09-18T18:00:00.000Z', openCount: 3 },
+    { dappId: 'beta', dappName: 'Beta Game', category: 'gaming', firstOpenedAt: '2026-09-16T11:00:00.000Z', lastOpenedAt: '2026-09-17T14:30:00.000Z', openCount: 2 },
+    { dappId: 'gamma', dappName: 'Gamma Wallet', category: 'wallet', firstOpenedAt: '2026-09-13T09:00:00.000Z', lastOpenedAt: '2026-09-13T09:00:00.000Z', openCount: 1 },
+  ], '2026-09-18T00:00:00.000Z');
+
+  assert.equal(summary.weeklyExplorationCount, 6);
+  assert.equal(summary.mostExplored[0].dappId, 'alpha');
+  assert.equal(summary.recentlyExplored[0].dappId, 'alpha');
+  assert.equal(summary.categories[0].name, 'defi');
+  assert.equal(summary.newDiscoveries, 3);
+  assert.match(summary.recentlyExplored[0].label, /Opened|Explored/i);
 });

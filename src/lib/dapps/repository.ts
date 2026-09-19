@@ -43,12 +43,51 @@ export async function searchDapps(filters: DappSearchFilters = {}): Promise<Dapp
   const data: any[] = await prisma.dapp.findMany({
     where,
     include: { categories: { include: { category: true } }, tags: { include: { tag: true } }, releases: true },
-    take: limit,
-    skip: offset,
+    take: query ? Math.min(250, limit + offset + 50) : limit,
+    skip: query ? 0 : offset,
     orderBy: filters.sort === "pulseScore" ? { pulseScore: "desc" } : filters.sort === "updatedAt" ? { updatedAt: "desc" } : filters.sort === "name" ? { name: "asc" } : { createdAt: "desc" },
   });
 
-  return data.map((record: any) => toRecord(record));
+  const records = data.map((record: any) => toRecord(record));
+  if (!query) return records;
+  return records
+    .map((record) => ({ record, score: searchRelevance(record, query) }))
+    .sort((left, right) => right.score - left.score || (right.record.pulseScore ?? 0) - (left.record.pulseScore ?? 0) || right.record.updatedAt.getTime() - left.record.updatedAt.getTime())
+    .slice(offset, offset + limit)
+    .map(({ record }) => record);
+}
+
+function searchRelevance(record: DappRecord, query: string): number {
+  const terms = tokenize(query);
+  const name = normalizeSearchText(record.name);
+  const shortDescription = normalizeSearchText(record.shortDescription);
+  const description = normalizeSearchText(record.description);
+  const developer = normalizeSearchText(record.developerName);
+  const categories = record.categories.flatMap((category) => [category.name, category.slug]).map(normalizeSearchText);
+  const tags = record.tags.flatMap((tag) => [tag.name, tag.slug]).map(normalizeSearchText);
+  const phrase = normalizeSearchText(query);
+  let score = 0;
+
+  if (phrase && name.includes(phrase)) score += 40;
+  if (phrase && shortDescription.includes(phrase)) score += 30;
+  if (phrase && description.includes(phrase)) score += 24;
+  for (const term of terms) {
+    if (name.includes(term)) score += 18;
+    if (shortDescription.includes(term)) score += 12;
+    if (description.includes(term)) score += 9;
+    if (categories.some((entry) => entry.includes(term))) score += 7;
+    if (tags.some((entry) => entry.includes(term))) score += 7;
+    if (developer.includes(term)) score += 3;
+  }
+  return score;
+}
+
+function tokenize(value: string): string[] {
+  return Array.from(new Set(normalizeSearchText(value).split(/\s+/).filter((term) => term.length > 2)));
+}
+
+function normalizeSearchText(value: string | null | undefined): string {
+  return (value ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
 function toRecord(record: any): DappRecord {

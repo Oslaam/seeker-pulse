@@ -12,7 +12,7 @@ const DappRecommendationSchema = z.object({
 
 export function detectDappSearchIntent(message: string): DappSearchIntent {
   const text = message.toLowerCase();
-  const stopWords = new Set(["need", "want", "would", "like", "find", "show", "give", "get", "app", "apps", "where", "can", "my", "me", "the", "for", "with", "from", "some", "an"]);
+  const stopWords = new Set(["need", "want", "would", "like", "find", "show", "give", "get", "app", "apps", "where", "can", "my", "me", "the", "for", "with", "from", "some", "an", "something", "looking", "please", "help", "use", "using"]);
   const assets = Array.from(new Set((text.match(/\b(?:skr|solana|usdc|usdt|bonk|sol|eth|btc|nft|meme)\b/g) ?? []).map((value) => value.toUpperCase())));
 
   const intentByPattern = [
@@ -62,7 +62,7 @@ export function recommendDappsForMessage(message: string, dapps: Array<Partial<D
         if (name.includes(normalizedKeyword)) {
           relevance += 0.32;
           matchedKeywords.push(keyword);
-        } else if (description.includes(normalizedKeyword)) {
+        } else if (description.includes(normalizedKeyword) || relatedWordMatch(description, normalizedKeyword)) {
           relevance += 0.24;
           matchedKeywords.push(keyword);
         } else if (metadata.includes(normalizedKeyword)) {
@@ -98,4 +98,10 @@ export function recommendDappsForMessage(message: string, dapps: Array<Partial<D
 
 function normalizeSearchText(value: string | null | undefined): string {
   return (value ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function relatedWordMatch(text: string, keyword: string): boolean {
+  if (keyword.length < 4) return false;
+  const stem = keyword.endsWith("ing") ? keyword.slice(0, -3) : keyword.endsWith("ed") ? keyword.slice(0, -2) : keyword.endsWith("s") ? keyword.slice(0, -1) : keyword;
+  return stem.length >= 4 && text.split(/\s+/).some((word) => word.startsWith(stem));
 }
