@@ -33,3 +33,6 @@ android/local.properties
 android/.gradle/
 android/**/build/
 android/capacitor-cordova-android-plugins/
+# APK artifacts must stay outside the web asset directory
+public/*.apk
+android/app/build/outputs/apk/
