@@ -54,6 +54,9 @@ const appVersion = document.getElementById("app-version") as HTMLElement;
 const appUpdate = document.getElementById("app-update") as HTMLButtonElement;
 const walletConnectLabel = document.getElementById("wallet-connect-label") as HTMLElement;
 const walletConnectStatus = document.getElementById("wallet-connect-status") as HTMLElement;
+const walletActions = document.getElementById("wallet-actions") as HTMLElement;
+const walletCopy = document.getElementById("wallet-copy") as HTMLButtonElement;
+const walletDisconnect = document.getElementById("wallet-disconnect") as HTMLButtonElement;
 const useConnectedWalletBtn = document.getElementById("use-connected-wallet-btn") as HTMLButtonElement;
 const pulseMode = document.getElementById("pulse-mode") as HTMLButtonElement;
 const lookupMode = document.getElementById("lookup-mode") as HTMLButtonElement;
@@ -134,8 +137,8 @@ function apiUrl(path: string): string {
 function renderWalletButton(): void {
   walletConnect.hidden = !walletAvailable() && !connectedAddress;
   walletConnect.classList.toggle("connected", Boolean(connectedAddress));
-  walletConnect.title = connectedAddress ? "Disconnect wallet" : "Connect wallet";
-  walletConnect.setAttribute("aria-label", connectedAddress ? "Disconnect wallet" : "Connect wallet");
+  walletConnect.title = connectedAddress ? "Open wallet options" : "Connect wallet";
+  walletConnect.setAttribute("aria-label", connectedAddress ? "Open wallet options" : "Connect wallet");
   walletConnectLabel.textContent = connectedAddress
     ? connectedSkrDomain || "No .skr identity"
     : "Connect wallet";
@@ -146,6 +149,7 @@ function renderWalletButton(): void {
     useConnectedWalletBtn.hidden = !connectedAddress;
     useConnectedWalletBtn.disabled = !connectedAddress;
   }
+  walletActions.hidden = !connectedAddress;
   syncPulseAvailability();
 }
 
@@ -156,25 +160,11 @@ function syncPulseAvailability(): void {
 }
 
 walletConnect.addEventListener("click", async () => {
-  walletConnect.disabled = true;
   if (connectedAddress) {
-    try {
-      await disconnectWallet();
-      connectedAddress = null;
-      connectedSkrDomain = null;
-      sessionToken = null;
-      sessionStorage.removeItem("seeker-pulse-session");
-      pulseDashboard.hidden = true;
-      setMode("lookup");
-      renderWalletButton();
-    } catch (error) {
-      formError.textContent = error instanceof Error ? error.message : "Wallet disconnect failed.";
-      formError.hidden = false;
-    } finally {
-      walletConnect.disabled = false;
-    }
+    walletActions.hidden = !walletActions.hidden;
     return;
   }
+  walletConnect.disabled = true;
   walletConnectLabel.textContent = "Opening wallet...";
   walletConnectStatus.textContent = "Approve in your wallet";
   try {
@@ -184,6 +174,7 @@ walletConnect.addEventListener("click", async () => {
     await authenticateWallet(wallet.address);
     renderWalletButton();
     setMode("pulse");
+    await loadConnectedWalletSnapshot(wallet.address);
     setSidebar(false);
     if (shouldAutoFillLookupInput({ connectedAddress: wallet.address, explicitUserIntent: false })) {
       input.value = wallet.address;
@@ -197,6 +188,52 @@ walletConnect.addEventListener("click", async () => {
     walletConnect.disabled = false;
   }
 });
+
+walletDisconnect.addEventListener("click", async () => {
+  walletDisconnect.disabled = true;
+  try {
+    await disconnectWallet();
+    connectedAddress = null;
+    connectedSkrDomain = null;
+    sessionToken = null;
+    sessionStorage.removeItem("seeker-pulse-session");
+    pulseDashboard.hidden = true;
+    walletActions.hidden = true;
+    setMode("lookup");
+    renderWalletButton();
+  } catch (error) {
+    formError.textContent = error instanceof Error ? error.message : "Wallet disconnect failed.";
+    formError.hidden = false;
+  } finally {
+    walletDisconnect.disabled = false;
+  }
+});
+
+walletCopy.addEventListener("click", async () => {
+  if (!connectedAddress) return;
+  try {
+    await navigator.clipboard.writeText(connectedAddress);
+    walletCopy.textContent = "Copied";
+    window.setTimeout(() => { walletCopy.textContent = "Copy address"; }, 1400);
+  } catch {
+    walletCopy.textContent = "Copy unavailable";
+    window.setTimeout(() => { walletCopy.textContent = "Copy address"; }, 1400);
+  }
+});
+
+async function loadConnectedWalletSnapshot(address: string): Promise<void> {
+  try {
+    const response = await fetch(apiUrl(`/api/lookup?q=${encodeURIComponent(address)}`));
+    const data = await readJson<LookupData>(response);
+    if (!response.ok) throw new Error(data.error || "Connected wallet identity unavailable.");
+    connectedSkrDomain = data.skrDomain;
+    renderWalletButton();
+    renderPulseDashboard(data);
+  } catch (error) {
+    console.warn("[Pulse] connected wallet snapshot unavailable:", error);
+    renderWalletButton();
+  }
+}
 
 async function authenticateWallet(address: string): Promise<void> {
   const challengeResponse = await fetch(apiUrl(`/api/auth/wallet?address=${encodeURIComponent(address)}`));

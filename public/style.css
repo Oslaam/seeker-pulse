@@ -106,6 +106,11 @@ a { color: inherit; }
   cursor: pointer;
   font: 600 0.8rem var(--font-body);
 }
+.wallet-action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin: -0.15rem 0 0.25rem; }
+.wallet-action-button { min-height: 2.55rem; padding: 0.55rem 0.65rem; border: 1px solid rgba(98, 245, 189, 0.25); border-radius: 11px; background: rgba(98, 245, 189, 0.06); color: #d8fff0; cursor: pointer; font: 600 0.72rem var(--font-body); }
+.wallet-action-button:hover, .wallet-action-button:focus-visible { outline: none; border-color: rgba(98, 245, 189, 0.62); background: rgba(98, 245, 189, 0.12); }
+.wallet-action-button.wallet-action-danger { border-color: rgba(255, 132, 107, 0.32); color: #ffc2b5; background: rgba(255, 132, 107, 0.06); }
+.wallet-action-button.wallet-action-danger:hover, .wallet-action-button.wallet-action-danger:focus-visible { border-color: rgba(255, 132, 107, 0.62); background: rgba(255, 132, 107, 0.12); }
 .wallet-button-mark { display: grid; flex: 0 0 2.15rem; width: 2.15rem; height: 2.15rem; place-items: center; overflow: hidden; border: 1px solid rgba(20, 241, 149, 0.4); border-radius: 10px; background: rgba(11, 12, 16, 0.45); }
 .wallet-button-mark img { width: 100%; height: 100%; object-fit: cover; }
 .wallet-button-copy { display: grid; flex: 1; gap: 0.22rem; min-width: 0; margin: 0 0.7rem; }
