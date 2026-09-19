@@ -1,5 +1,6 @@
 import { connectWallet, disconnectWallet, signWalletMessage, walletAddress, walletAvailable } from "../lib/wallet.js";
 import { Capacitor } from "@capacitor/core";
+import { PublicKey } from "@solana/web3.js";
 
 type Verdict = "aligned" | "watch" | "at_risk" | "idle";
 interface Category { id: string; label: string; verdict: Verdict; detail: string; value: number; unit: string; }
@@ -167,6 +168,7 @@ walletConnect.addEventListener("click", async () => {
   try {
     const wallet = connectedAddress ? { address: connectedAddress } : await connectWallet();
     connectedAddress = wallet.address;
+    console.info("[MWA] connected address:", wallet.address);
     await authenticateWallet(wallet.address);
     renderWalletButton();
     setMode("pulse");
@@ -366,7 +368,10 @@ form.addEventListener("submit", async (event) => {
   const lookupQuery = normalizeLookupQuery(query);
   setLoading(true); formError.hidden = true; resultEl.hidden = true;
   try {
-    const response = await fetch(apiUrl(`/api/lookup?q=${encodeURIComponent(lookupQuery)}`));
+    const lookupUrl = apiUrl(`/api/lookup?q=${encodeURIComponent(lookupQuery)}`);
+    console.info("[Pulse] lookup request:", lookupUrl);
+    const response = await fetch(lookupUrl);
+    console.info("[Pulse] lookup response:", { status: response.status, ok: response.ok });
     const data = await readJson<LookupData>(response);
     if (!response.ok) throw new Error(data.error || "Lookup failed.");
     hideDomainSuggestions();
@@ -376,6 +381,11 @@ form.addEventListener("submit", async (event) => {
 });
 
 function normalizeLookupQuery(query: string): string {
+  try {
+    return new PublicKey(query).toBase58();
+  } catch {
+    // Continue with .skr domain normalization for non-address input.
+  }
   const name = query.toLowerCase();
   return /^[a-z0-9-]{2,63}$/.test(name) ? `${name}.skr` : query;
 }
