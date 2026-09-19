@@ -85,6 +85,7 @@ const pulseNextAction = document.getElementById("pulse-next-action") as HTMLButt
 const mobilePulse = document.getElementById("mobile-pulse") as HTMLButtonElement;
 const mobileLookup = document.getElementById("mobile-lookup") as HTMLButtonElement;
 const mobileDiscover = document.getElementById("mobile-discover") as HTMLButtonElement;
+const mobileNav = document.getElementById("mobile-nav") as HTMLElement;
 let currentCatalogQuery = "";
 let currentCatalogOffset = 0;
 let catalogLoading = false;
@@ -100,7 +101,8 @@ const apiBase = isCapacitorApp
 
 let connectedAddress: string | null = walletAddress();
 let connectedSkrDomain: string | null = null;
-let sessionToken = sessionStorage.getItem("seeker-pulse-session");
+let sessionToken = connectedAddress ? sessionStorage.getItem("seeker-pulse-session") : null;
+if (!connectedAddress) sessionStorage.removeItem("seeker-pulse-session");
 let hasLookupResult = false;
 
 appVersion.textContent = `v${APP_VERSION}`;
@@ -156,6 +158,8 @@ function renderWalletButton(): void {
 function syncPulseAvailability(): void {
   const pulseAvailable = Boolean(connectedAddress && sessionToken);
   pulseMode.hidden = !pulseAvailable;
+  mobilePulse.hidden = !pulseAvailable;
+  mobileNav.classList.toggle("is-compact", !pulseAvailable);
   if (!pulseAvailable && pulseMode.classList.contains("active")) setMode("lookup");
 }
 
