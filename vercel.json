@@ -6,5 +6,8 @@
     { "source": "/terms", "destination": "/legal.html" },
     { "source": "/copyright", "destination": "/legal.html" },
     { "source": "/legal", "destination": "/legal.html" }
+  ],
+  "crons": [
+    { "path": "/api/dapps-refresh", "schedule": "0 3 * * *" }
   ]
 }

@@ -6,7 +6,7 @@ const endpoint = "https://seekertracker.com/api/dappstore?status=active";
 type CatalogRecord = {
   androidPackage?: string;
   status?: string;
-  rating?: { rating?: number; reviewsByRating?: number[] } | null;
+  rating?: { rating?: number; reviewsByRating?: number[]; reviewCount?: number; count?: number } | number | null;
   lastRelease?: {
     displayName?: string;
     subtitle?: string;
@@ -37,7 +37,11 @@ function normalizeRecord(record: CatalogRecord, verifiedAt: string): DiscoveredD
   const name = release?.displayName?.trim();
   if (!packageName || !name) return null;
   const website = (publisher?.websiteOverride ?? publisher?.website)?.trim();
-  const reviews = record.rating?.reviewsByRating;
+  const rating = typeof record.rating === "number" ? record.rating : record.rating?.rating;
+  const reviews = typeof record.rating === "object" && record.rating ? record.rating.reviewsByRating : undefined;
+  const reviewCount = typeof record.rating === "object" && record.rating
+    ? record.rating.reviewCount ?? record.rating.count ?? reviews?.reduce((total, count) => total + (Number.isFinite(count) ? count : 0), 0)
+    : undefined;
 
   return {
     source: "seekertracker-snapshot",
@@ -55,8 +59,8 @@ function normalizeRecord(record: CatalogRecord, verifiedAt: string): DiscoveredD
     status: record.status === "active" ? "active" : "inactive",
     isSeekerCompatible: true,
     isVerified: false,
-    rating: typeof record.rating?.rating === "number" ? record.rating.rating : undefined,
-    reviewCount: reviews?.reduce((total, count) => total + (Number.isFinite(count) ? count : 0), 0),
+    rating: typeof rating === "number" && Number.isFinite(rating) ? rating : undefined,
+    reviewCount: typeof reviewCount === "number" && Number.isFinite(reviewCount) ? reviewCount : undefined,
     releases: release?.androidDetails?.version ? [{
       version: release.androidDetails.version,
       versionCode: release.androidDetails.versionCode?.toString(),

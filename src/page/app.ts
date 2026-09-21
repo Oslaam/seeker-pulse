@@ -554,17 +554,25 @@ function renderPulseDashboard(data: LookupData): void {
 async function loadPersonalizedDapps(usedDapps: DetectedDapp[]): Promise<void> {
   const usedIds = new Set(usedDapps.map((record) => record.dapp.id));
   const category = usedDapps.flatMap((record) => record.dapp.categories)[0]?.slug;
-  const params = new URLSearchParams({ active: "true", seekerCompatible: "true", limit: "8", sort: "pulseScore" });
+  const params = new URLSearchParams({ active: "true", seekerCompatible: "true", limit: "50", sort: "pulseScore" });
   if (category) params.set("category", category);
   try {
     const response = await fetch(apiUrl(`/api/dapps?${params}`));
     const data = await readJson<DappListResponse>(response);
     if (!response.ok) throw new Error(data.error || "Recommendation search failed.");
-    const recommendations = data.dapps.filter((dapp) => !usedIds.has(dapp.id)).slice(0, 3);
+    const candidates = data.dapps.filter((dapp) => !usedIds.has(dapp.id));
+    const recommendations = rotateDailyRecommendations(candidates);
     renderPulseRecommendations(recommendations);
   } catch {
     pulseRecommendations.textContent = "Recommendations are temporarily unavailable.";
   }
+}
+
+function rotateDailyRecommendations(dapps: DappListResponse["dapps"]): DappListResponse["dapps"] {
+  if (dapps.length <= 3) return dapps;
+  const day = Math.floor(Date.now() / 86400000);
+  const start = day % dapps.length;
+  return Array.from({ length: 3 }, (_, index) => dapps[(start + index) % dapps.length]);
 }
 
 function renderPulseRecommendations(dapps: DappListResponse["dapps"]): void {
