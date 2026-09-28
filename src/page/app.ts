@@ -15,7 +15,7 @@ interface DappFinderResponse { answer: string; recommendations: DappRecommendati
 interface DappListResponse { dapps: DappRecommendation["dapp"][]; count: number; catalogCount?: number; }
 interface VersionManifest { version: string; packageName: string; updateUrl: string; }
 
-const APP_VERSION = "1.0.6";
+const APP_VERSION = "1.0.7";
 const APP_PACKAGE_NAME = "xyz.seekerpulse";
 const APP_UPDATE_URL = `solanadappstore://details?id=${APP_PACKAGE_NAME}`;
 
