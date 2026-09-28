@@ -10,6 +10,10 @@ export async function getDappById(id: string): Promise<DappRecord | null> {
   return toRecord(record);
 }
 
+export async function countAvailableDapps(): Promise<number> {
+  return prisma.dapp.count({ where: { isActive: true, isSeekerCompatible: true } });
+}
+
 export async function searchDapps(filters: DappSearchFilters = {}): Promise<DappRecord[]> {
   const query = (filters.query ?? "").trim();
   const category = (filters.category ?? "").trim();

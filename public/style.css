@@ -133,7 +133,17 @@ a { color: inherit; }
 .sidebar-creator { font: 700 1.05rem var(--font-display); }
 .sidebar-post { padding-top: 0.35rem; color: #bcc5d6 !important; font-size: 0.82rem; }
 .legal-panel { position: fixed; z-index: 40; inset: 0; overflow: auto; padding: 6rem 1rem 3rem; background: rgba(7, 8, 11, 0.82); backdrop-filter: blur(8px); }
+.update-panel { z-index: 50; display: grid; place-items: center; padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom)); }
+.update-panel[hidden] { display: none; }
 .legal-panel-card { position: relative; width: min(100%, 48rem); margin: 0 auto; padding: 2rem; border: 1px solid var(--border); border-radius: 18px; background: #15171c; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4); }
+.update-panel-card { width: min(100%, 27rem); padding: 2rem; }
+.update-panel-card h2 { max-width: 20rem; margin: 0.65rem 2rem 0.5rem 0; color: var(--text); font: 600 1.45rem/1.2 var(--font-display); }
+.update-panel-card p { margin: 0; color: var(--text-muted); font: 0.9rem/1.55 var(--font-body); }
+.update-panel-actions { display: flex; justify-content: flex-end; gap: 0.65rem; margin-top: 1.5rem; }
+.update-later-button, .update-now-button { min-height: 2.75rem; padding: 0.65rem 0.95rem; border: 1px solid var(--border-strong); border-radius: 8px; cursor: pointer; font: 600 0.82rem var(--font-body); }
+.update-later-button { background: transparent; color: var(--text-muted); }
+.update-now-button { border-color: var(--verdict-aligned); background: var(--verdict-aligned); color: #07120d; }
+.update-later-button:focus-visible, .update-now-button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .legal-panel-close { position: absolute; top: 1rem; right: 1rem; width: 2rem; height: 2rem; }
 .legal-panel .legal-document { padding: 0; border: 0; background: transparent; }
 .legal-panel .legal-document h2 { margin: 0.35rem 0 0.25rem; color: #fff; font: 600 clamp(1.8rem, 5vw, 2.6rem)/1.1 var(--font-display); }
@@ -419,6 +429,9 @@ main {
 
 .dapp-chat h2 { margin: 0.35rem 0 0.35rem; font: 600 1.5rem var(--font-display); }
 .dapp-chat-intro { color: var(--text-muted); line-height: 1.5; margin: 0 0 1rem; }
+.dapp-catalog-count { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; width: min(100%, 42rem); margin: 0.9rem 0 1.1rem; padding: 0.65rem 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); color: var(--text); font: 600 0.85rem var(--font-display); }
+.dapp-catalog-count-label { color: var(--text-muted); font: 0.68rem var(--font-mono); text-align: right; }
+.detected-dapps-note { max-width: 42rem; margin: 0 0 1rem; color: var(--text-muted); font: 0.82rem/1.55 var(--font-body); }
 .dapp-prompt-row { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.85rem; }
 .dapp-prompt { border: 1px solid var(--border); border-radius: 999px; padding: 0.45rem 0.7rem; background: rgba(255, 255, 255, 0.035); color: #cdd2de; cursor: pointer; font: 0.72rem var(--font-body); transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease; }
 .dapp-prompt:hover, .dapp-prompt:focus-visible { outline: none; border-color: rgba(20, 241, 149, 0.65); color: var(--verdict-aligned); background: rgba(20, 241, 149, 0.08); }

@@ -5,12 +5,14 @@ import { buildDappStoreDeepLink } from '../src/dist/lib/dapps/deep-link.js';
 import { normalizeDiscoveredDapp } from '../src/dist/lib/dapps/normalize.js';
 import { rankDappForPulse } from '../src/dist/lib/dapps/ranking.js';
 import { detectDappSearchIntent, recommendDappsForMessage } from '../src/dist/lib/dapps/ai.js';
-import { findCandidateDapps } from '../src/dist/lib/dapps/search.js';
+import { findCandidateDapps, mergeCandidateDappGroups } from '../src/dist/lib/dapps/search.js';
 import { validateDiscoveredDapp } from '../src/dist/lib/dapps/validate.js';
 import { VerifiedSolanaMobileCatalogProvider } from '../src/dist/lib/dapps/discovery.js';
 import { shouldAutoFillLookupInput } from '../src/dist/lib/ui-state.js';
 import { buildJourneySummary } from '../src/dist/lib/exploration.js';
 import { dappMetadataChanged } from '../src/dist/lib/dapps/sync.js';
+import { getDappSource } from '../src/dist/lib/dapps/sync.js';
+import { RemoteCatalogProvider } from '../src/dist/lib/dapps/remote-provider.js';
 
 const sample = {
   source: 'official-seed',
@@ -133,9 +135,32 @@ test('findCandidateDapps searches name, subtitle, and full description', () => {
   assert.equal(findCandidateDapps([{ id: 'description', name: 'Harbor', shortDescription: 'A wallet', description: 'Track NFT collections and floor prices', categories: [], tags: [] }], { query: 'floor prices', limit: 10 })[0].id, 'description');
 });
 
+test('merged keyword results retain Play Seeke as a gaming candidate', () => {
+  const playSeeke = {
+    id: 'xyz.seeke',
+    name: 'Play Seeke',
+    shortDescription: 'Play, progress, and earn on Solana',
+    description: 'A wallet-powered gaming app with fast mini-games.',
+    categories: [],
+    tags: [],
+  };
+  const pool = mergeCandidateDappGroups([
+    [{ id: 'other-game', name: 'Other Game', categories: [], tags: [] }, playSeeke],
+    [playSeeke],
+  ]);
+  const results = findCandidateDapps(pool, { query: 'play game gaming', limit: 50 });
+
+  assert.equal(pool.filter((dapp) => dapp.id === 'xyz.seeke').length, 1);
+  assert.equal(results[0].id, 'xyz.seeke');
+});
+
 test('catalog sync detects changed reviews and descriptions', () => {
   assert.equal(dappMetadataChanged({ rating: 4.1, reviewCount: 8, description: 'Old copy' }, { rating: 4.6, reviewCount: 19, description: 'New copy' }), true);
   assert.equal(dappMetadataChanged({ rating: 4.1, reviewCount: 8, description: 'Same copy' }, { rating: 4.1, reviewCount: 8, description: 'Same copy' }), false);
+});
+
+test('remote catalog sync cleanup uses the source stored on imported dApps', () => {
+  assert.equal(getDappSource(new RemoteCatalogProvider()), 'seekertracker-snapshot');
 });
 
 test('connected wallet state does not auto-fill the public .skr lookup input', () => {

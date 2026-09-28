@@ -65,6 +65,19 @@
     <div class="legal-panel-card"><button class="legal-panel-close" id="legal-panel-close" type="button" aria-label="Close legal information">&#10005;</button><div id="legal-panel-content"></div></div>
   </section>
 
+  <section class="legal-panel update-panel" id="update-panel" hidden aria-modal="true" role="dialog" aria-labelledby="update-panel-title" aria-describedby="update-panel-message">
+    <div class="legal-panel-card update-panel-card">
+      <button class="legal-panel-close" id="update-panel-close" type="button" aria-label="Close update prompt">&#10005;</button>
+      <div class="section-kicker">App update</div>
+      <h2 id="update-panel-title">A new version is available</h2>
+      <p id="update-panel-message">Update Seeker Pulse to get the latest improvements.</p>
+      <div class="update-panel-actions">
+        <button class="update-later-button" id="update-later" type="button">Later</button>
+        <button class="update-now-button" id="update-now" type="button">Update now <span aria-hidden="true">&#8599;</span></button>
+      </div>
+    </div>
+  </section>
+
   <main>
     <section class="hero">
       <h1 id="hero-title">Where do you land today?</h1>
@@ -119,12 +132,12 @@
         </div>
         <div class="pulse-score-panel pulse-score-primary">
           <div><span class="meta-label">Pulse Score</span><strong id="pulse-dashboard-score">—</strong></div>
-          <p>Independent Pulse metric from verified public activity and Pulse signals.</p>
+          <p>Independent estimate from public transactions. It is not Solana Mobile's score, and labels may miss wallet or app activity.</p>
         </div>
         <div class="pulse-stat-grid">
           <div><strong id="pulse-dashboard-today">—</strong><span>today</span></div>
           <div><strong id="pulse-dashboard-streak">—</strong><span>day streak</span></div>
-          <div><strong id="pulse-dashboard-dapps">—</strong><span>dApps detected</span></div>
+          <div><strong id="pulse-dashboard-dapps">—</strong><span>protocols recognized</span></div>
           <div><strong id="pulse-dashboard-skr">—</strong><span>SKR balance</span></div>
         </div>
         <div class="pulse-progress-panel">
@@ -176,7 +189,7 @@
           <span class="meta-label">Pulse Score</span>
           <strong id="pulse-score">—</strong>
         </div>
-        <p>Independent Pulse metric based on activity, exploration, consistency, and risk signals.</p>
+        <p>Independent estimate from public transactions. It is not Solana Mobile's score, and labels may miss wallet or app activity.</p>
       </div>
 
       <div class="missions-panel">
@@ -189,8 +202,9 @@
       <div class="rings-grid" id="rings-grid"></div>
 
       <section class="detected-dapps-panel" aria-labelledby="detected-dapps-title">
-        <div class="section-kicker">Public activity</div>
-        <h2 id="detected-dapps-title">Detected dApps</h2>
+        <div class="section-kicker">On-chain activity</div>
+        <h2 id="detected-dapps-title">dApps detected from transactions</h2>
+        <p class="detected-dapps-note">Only apps Pulse can match to public transaction labels appear here. App opens without a matching on-chain transaction are not visible.</p>
         <div id="detected-categories" class="detected-categories"></div>
         <div id="detected-dapps"></div>
       </section>
@@ -223,6 +237,7 @@
       <div class="section-kicker">Catalog search</div>
       <h2 id="dapp-chat-title">What are you looking for?</h2>
       <p class="dapp-chat-intro">Ask naturally. I search the verified Seeker catalog and explain the closest matches.</p>
+      <div class="dapp-catalog-count" role="status" aria-live="polite"><span id="dapp-catalog-total">Loading catalog count…</span><span class="dapp-catalog-count-label">Available to browse</span></div>
       <div class="dapp-prompt-row" aria-label="Suggested questions">
         <button class="dapp-prompt" type="button" data-prompt="What can I do with SKR?">Use SKR</button>
         <button class="dapp-prompt" type="button" data-prompt="I want to stake SKR">Stake SKR</button>

@@ -51,6 +51,16 @@ export function findCandidateDapps<T extends { id?: string; name?: string; short
   return scored;
 }
 
+export function mergeCandidateDappGroups<T extends { id?: string }>(groups: T[][]): T[] {
+  const unique = new Map<string, T>();
+  for (const group of groups) {
+    for (const dapp of group) {
+      if (dapp.id && !unique.has(dapp.id)) unique.set(dapp.id, dapp);
+    }
+  }
+  return [...unique.values()];
+}
+
 export function buildDappSearchQuery(filter: DappSearchFilters): string {
   return [
     filter.query,

@@ -12,10 +12,10 @@ interface LookupData { address: string; skrDomain: string | null; isSeekerWallet
 interface DomainSuggestionResponse { domains: Array<{ domain: string | null; address: string }>; }
 interface DappRecommendation { dapp: { id: string; name: string; shortDescription: string | null; description: string | null; deepLink: string | null; iconUrl: string | null; rating: number | null; reviewCount: number | null; pulseScore: number | null }; reason: string; relevance: number; }
 interface DappFinderResponse { answer: string; recommendations: DappRecommendation[]; }
-interface DappListResponse { dapps: DappRecommendation["dapp"][]; count: number; }
+interface DappListResponse { dapps: DappRecommendation["dapp"][]; count: number; catalogCount?: number; }
 interface VersionManifest { version: string; packageName: string; updateUrl: string; }
 
-const APP_VERSION = "1.0.3";
+const APP_VERSION = "1.0.6";
 const APP_PACKAGE_NAME = "xyz.seekerpulse";
 const APP_UPDATE_URL = `solanadappstore://details?id=${APP_PACKAGE_NAME}`;
 
@@ -46,12 +46,17 @@ const sidebarClose = document.getElementById("sidebar-close") as HTMLButtonEleme
 const dappChatStatus = document.getElementById("dapp-chat-status") as HTMLDivElement;
 const dappChatLoading = document.getElementById("dapp-chat-loading") as HTMLDivElement;
 const dappChatResults = document.getElementById("dapp-chat-results") as HTMLDivElement;
+const dappCatalogTotal = document.getElementById("dapp-catalog-total") as HTMLElement;
 const dappPrompts = Array.from(document.querySelectorAll<HTMLButtonElement>(".dapp-prompt"));
 const dappChat = document.getElementById("dapp-chat") as HTMLElement;
 const dappLoadMore = document.getElementById("dapp-load-more") as HTMLButtonElement;
 const walletConnect = document.getElementById("wallet-connect") as HTMLButtonElement;
 const appVersion = document.getElementById("app-version") as HTMLElement;
 const appUpdate = document.getElementById("app-update") as HTMLButtonElement;
+const updatePanel = document.getElementById("update-panel") as HTMLElement;
+const updatePanelClose = document.getElementById("update-panel-close") as HTMLButtonElement;
+const updateLater = document.getElementById("update-later") as HTMLButtonElement;
+const updateNow = document.getElementById("update-now") as HTMLButtonElement;
 const walletConnectLabel = document.getElementById("wallet-connect-label") as HTMLElement;
 const walletConnectStatus = document.getElementById("wallet-connect-status") as HTMLElement;
 const walletActions = document.getElementById("wallet-actions") as HTMLElement;
@@ -89,6 +94,7 @@ const mobileNav = document.getElementById("mobile-nav") as HTMLElement;
 let currentCatalogQuery = "";
 let currentCatalogOffset = 0;
 let catalogLoading = false;
+let catalogCountLoading = false;
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 let suggestionRequest: ReturnType<typeof setTimeout> | null = null;
 let suggestionRequestId = 0;
@@ -107,6 +113,19 @@ let hasLookupResult = false;
 
 appVersion.textContent = `v${APP_VERSION}`;
 appUpdate.addEventListener("click", () => { window.location.href = APP_UPDATE_URL; });
+updatePanelClose.addEventListener("click", closeUpdatePanel);
+updateLater.addEventListener("click", closeUpdatePanel);
+updateNow.addEventListener("click", () => { window.location.href = APP_UPDATE_URL; });
+updatePanel.addEventListener("click", (event) => {
+  if (event.target === updatePanel) closeUpdatePanel();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !updatePanel.hidden) closeUpdatePanel();
+});
+
+function closeUpdatePanel(): void {
+  updatePanel.hidden = true;
+}
 
 function compareVersions(left: string, right: string): number {
   const leftParts = left.split(".").map((part) => Number(part));
@@ -127,6 +146,8 @@ async function checkForAppUpdate(): Promise<void> {
     if (manifest.packageName !== APP_PACKAGE_NAME || !manifest.version || compareVersions(manifest.version, APP_VERSION) <= 0) return;
     appUpdate.hidden = false;
     appUpdate.title = `Version ${manifest.version} is available`;
+    updatePanel.hidden = false;
+    updateNow.focus();
   } catch {
     // Update checks are best effort and must not block the app.
   }
@@ -341,6 +362,12 @@ dappPrompts.forEach((prompt) => prompt.addEventListener("click", () => {
   dappChatInput.value = prompt.dataset.prompt || "";
   dappChatInput.focus();
 }));
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && !dappChat.hidden) void loadDappCatalogCount();
+});
+setInterval(() => {
+  if (document.visibilityState === "visible" && !dappChat.hidden) void loadDappCatalogCount();
+}, 5 * 60 * 1000);
 
 function setMode(mode: "pulse" | "lookup" | "catalog"): void {
   const pulseActive = mode === "pulse" && Boolean(connectedAddress && sessionToken);
@@ -370,6 +397,7 @@ function setMode(mode: "pulse" | "lookup" | "catalog"): void {
   } else if (catalogActive) {
     heroTitle.textContent = "What are you looking for?";
     heroSub.textContent = "Describe the Seeker dApp you need and Pulse will search the verified catalog for relevant matches.";
+    void loadDappCatalogCount();
     dappChatInput.focus();
   } else {
     heroTitle.textContent = "Where do you land today?";
@@ -404,13 +432,29 @@ dappChatForm.addEventListener("submit", async (event) => {
   }
 });
 
+async function loadDappCatalogCount(): Promise<void> {
+  if (catalogCountLoading) return;
+  catalogCountLoading = true;
+  try {
+    const params = new URLSearchParams({ active: "true", seekerCompatible: "true", limit: "1", includeCatalogCount: "true" });
+    const response = await fetch(apiUrl(`/api/dapps?${params}`));
+    const data = await readJson<DappListResponse>(response);
+    if (!response.ok || typeof data.catalogCount !== "number") throw new Error("Catalog count unavailable");
+    dappCatalogTotal.textContent = `${new Intl.NumberFormat().format(data.catalogCount)} active dApps`;
+  } catch {
+    dappCatalogTotal.textContent = "Catalog count unavailable";
+  } finally {
+    catalogCountLoading = false;
+  }
+}
+
 async function loadMoreDapps(): Promise<void> {
   if (catalogLoading || !currentCatalogQuery) return;
   catalogLoading = true;
   dappLoadMore.disabled = true;
   dappLoadMore.textContent = "Loading…";
   try {
-    const params = new URLSearchParams({ query: currentCatalogQuery, active: "true", seekerCompatible: "true", limit: "10", offset: String(currentCatalogOffset + 5), sort: "pulseScore" });
+    const params = new URLSearchParams({ query: currentCatalogQuery, active: "true", seekerCompatible: "true", limit: "10", offset: String(currentCatalogOffset || 5), sort: "pulseScore" });
     const response = await fetch(apiUrl(`/api/dapps?${params}`));
     const data = await readJson<DappListResponse>(response);
     if (!response.ok) throw new Error(data.error || "Could not load more dApps.");
@@ -773,10 +817,32 @@ function renderMissions(data: LookupData): void {
     return item;
   }));
 }
-function renderBanner(data: LookupData): void { identityBanner.innerHTML = ""; const badge = document.createElement("span"); badge.className = "badge"; badge.textContent = data.isSeekerWallet ? "SEEKER ID" : "UNKNOWN"; identityBanner.className = `identity-banner ${data.isSeekerWallet ? "confirmed" : "unknown"}`; identityBanner.append(badge, textNode(data.isSeekerWallet ? (data.skrDomain ? `Confirmed Seeker wallet — ${data.skrDomain}` : "Confirmed Seeker wallet.") : "No .skr Seeker ID detected for this wallet — showing raw on-chain activity only. Official Seeker eligibility can't be confirmed here.")); const verdict = data.scorecard.overallVerdict; verdictBanner.className = `verdict-banner ${verdict}`; const title = document.createElement("strong"); title.textContent = verdict === "aligned" ? "✅ Looks aligned with natural use" : verdict === "watch" ? "⚠️ Some patterns worth a look" : verdict === "idle" ? "⏸️ Not enough recent activity" : "🔴 This looks like manufactured activity"; const explanation = document.createElement("span"); explanation.className = "verdict-explanation"; explanation.textContent = verdict === "aligned" ? "Your recent activity is varied and spread out. We found no strong repetition, burst, or dust-transfer pattern." : verdict === "watch" ? "One or more signals appeared recently. That is ambiguous, not a judgment, but varied activity is worth prioritizing." : verdict === "idle" ? "There are no recent transactions or dApp interactions to assess. Idle is neutral: it is not a risk signal." : "Repeated actions combined with burst timing or negligible transfers resemble activity made to grind a score."; verdictBanner.replaceChildren(title, explanation); }
+function renderBanner(data: LookupData): void {
+  identityBanner.innerHTML = "";
+  const badge = document.createElement("span");
+  badge.className = "badge";
+  badge.textContent = data.isSeekerWallet ? "SEEKER ID" : "UNKNOWN";
+  identityBanner.className = `identity-banner ${data.isSeekerWallet ? "confirmed" : "unknown"}`;
+  identityBanner.append(badge, textNode(data.isSeekerWallet ? (data.skrDomain ? `Confirmed Seeker wallet — ${data.skrDomain}` : "Confirmed Seeker wallet.") : "No .skr Seeker ID detected for this wallet — showing raw on-chain activity only. Official Seeker eligibility can't be confirmed here."));
+
+  const verdict = data.scorecard.overallVerdict;
+  verdictBanner.className = `verdict-banner ${verdict}`;
+  const title = document.createElement("strong");
+  title.textContent = verdict === "aligned" ? "No strong repetition pattern detected" : verdict === "watch" ? "Some activity patterns to review" : verdict === "idle" ? "No recent activity to assess" : "Repeated activity pattern detected";
+  const explanation = document.createElement("span");
+  explanation.className = "verdict-explanation";
+  explanation.textContent = verdict === "aligned"
+    ? "Pulse found no strong repetition or burst pattern in the available public transactions. This is not an official Seeker assessment."
+    : verdict === "watch"
+      ? "Pulse detected a repeated, bursty, or low-value pattern. This is a heuristic, not evidence of intent or a prediction of official scoring."
+      : verdict === "idle"
+        ? "No recent wallet transactions were detected. App opens without public transactions are not visible to Pulse."
+        : "Pulse detected repeated, bursty, or low-value transactions. It cannot determine intent or predict Solana Mobile's scoring.";
+  verdictBanner.replaceChildren(title, explanation);
+}
 function textNode(value: string): HTMLSpanElement { const span = document.createElement("span"); span.textContent = value; return span; }
 function renderCategories(categories: Category[]): void { ringsGrid.innerHTML = ""; for (const category of categories) { const card = document.createElement("article"); card.className = `category-card ${category.verdict}`; const heading = document.createElement("div"); heading.className = "category-heading"; const label = document.createElement("h2"); label.textContent = category.label; const badge = document.createElement("span"); badge.className = "verdict-badge"; badge.textContent = verdictLabel(category.verdict); heading.append(label, badge); const raw = document.createElement("div"); raw.className = "category-raw"; raw.textContent = `${category.value} ${category.unit}`; const detail = document.createElement("p"); detail.className = "category-detail"; detail.textContent = category.detail; card.append(heading, raw, detail); ringsGrid.appendChild(card); } }
-function verdictLabel(verdict: Verdict): string { return verdict === "aligned" ? "Aligned" : verdict === "watch" ? "Watch" : verdict === "idle" ? "Idle" : "At risk"; }
+function verdictLabel(verdict: Verdict): string { return verdict === "aligned" ? "No flag" : verdict === "watch" ? "Review" : verdict === "idle" ? "No data" : "Pattern"; }
 function renderSuggestions(suggestions: Suggestion[]): void { suggestionsList.innerHTML = ""; for (const suggestion of suggestions) { const item = document.createElement("li"); item.textContent = suggestion.text; suggestionsList.appendChild(item); } }
 function shortenAddress(address: string): string { return !address || address.length < 10 ? address : `${address.slice(0, 4)}…${address.slice(-4)}`; }
 function startCountdown(nextResetIso: string): void { if (countdownTimer) clearInterval(countdownTimer); const target = new Date(nextResetIso).getTime(); const tick = () => { const diff = target - Date.now(); if (diff <= 0) { metaCountdown.textContent = "resetting…"; if (countdownTimer) clearInterval(countdownTimer); return; } const hours = String(Math.floor(diff / 3_600_000)).padStart(2, "0"); const minutes = String(Math.floor((diff % 3_600_000) / 60_000)).padStart(2, "0"); const seconds = String(Math.floor((diff % 60_000) / 1000)).padStart(2, "0"); metaCountdown.textContent = `${hours}:${minutes}:${seconds} UTC`; }; tick(); countdownTimer = setInterval(tick, 1000); }

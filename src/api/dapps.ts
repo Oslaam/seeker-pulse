@@ -1,4 +1,5 @@
-import { getDappById, searchDapps } from "../lib/dapps/repository.js";
+import { countAvailableDapps, getDappById, searchDapps } from "../lib/dapps/repository.js";
+import { findCandidateDapps, mergeCandidateDappGroups } from "../lib/dapps/search.js";
 import { detectDappSearchIntent, recommendDappsForMessage } from "../lib/dapps/ai.js";
 import { explainDappRecommendations } from "../lib/dapps/llm.js";
 import type { ApiRequest, ApiResponse } from "../api.js";
@@ -23,7 +24,7 @@ function queryBoolean(request: ApiRequest, key: string): boolean | undefined {
 
 export async function listDapps(request: ApiRequest, response: ApiResponse): Promise<void> {
   try {
-    const dapps = await searchDapps({
+    const filters = {
       query: queryString(request, "query"),
       category: queryString(request, "category"),
       tag: queryString(request, "tag"),
@@ -33,8 +34,12 @@ export async function listDapps(request: ApiRequest, response: ApiResponse): Pro
       limit: queryNumber(request, "limit"),
       offset: queryNumber(request, "offset"),
       sort: queryString(request, "sort") as "relevance" | "pulseScore" | "updatedAt" | "name" | undefined,
-    });
-    response.json({ dapps, count: dapps.length });
+    };
+    const [dapps, catalogCount] = await Promise.all([
+      searchDapps(filters),
+      queryBoolean(request, "includeCatalogCount") ? countAvailableDapps() : Promise.resolve(undefined),
+    ]);
+    response.json({ dapps, count: dapps.length, ...(catalogCount !== undefined ? { catalogCount } : {}) });
   } catch {
     response.status(503).json({ error: "The dApp catalog is currently unavailable." });
   }
@@ -68,13 +73,29 @@ export async function findDapps(request: { body?: unknown }, response: ApiRespon
 
   try {
     const intent = detectDappSearchIntent(message);
-    const candidates = await searchDapps({
-      query: intent.keywords.join(" "),
+    const candidateGroups = await Promise.all(intent.keywords.slice(0, 5).map((keyword) => searchDapps({
+      query: keyword,
       activeOnly: true,
       seekerCompatibleOnly: true,
       limit: 50,
       sort: "pulseScore",
-    });
+    })));
+    const candidatePool = mergeCandidateDappGroups(candidateGroups);
+    const candidatesById = new Map(candidatePool.map((dapp) => [dapp.id, dapp]));
+    const candidates = findCandidateDapps(candidatePool.map((dapp) => ({
+      id: dapp.id,
+      name: dapp.name,
+      description: dapp.description,
+      shortDescription: dapp.shortDescription,
+      developerName: dapp.developerName,
+      categories: dapp.categories.map((category) => category.slug),
+      tags: dapp.tags.map((tag) => tag.slug),
+      source: dapp.source,
+    })), { query: intent.keywords.join(" "), limit: 50 })
+      .flatMap(({ id }) => {
+        const dapp = id ? candidatesById.get(id) : undefined;
+        return dapp ? [dapp] : [];
+      });
     const deterministic = recommendDappsForMessage(message, candidates.map((dapp) => ({
       id: dapp.id,
       name: dapp.name,

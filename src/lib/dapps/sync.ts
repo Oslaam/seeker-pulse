@@ -224,7 +224,9 @@ export function dappMetadataChanged(current: Record<string, unknown>, next: Reco
 }
 
 export function getDappSource(provider: DappCatalogProvider): string {
-  return provider.constructor.name === "VerifiedSolanaMobileCatalogProvider" ? "solana-mobile" : "verified-import";
+  if (provider.constructor.name === "VerifiedSolanaMobileCatalogProvider") return "solana-mobile";
+  if (provider.constructor.name === "RemoteCatalogProvider") return "seekertracker-snapshot";
+  return "verified-import";
 }
 
 function slugify(value: string): string {
