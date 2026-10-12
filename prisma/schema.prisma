@@ -7,9 +7,9 @@ datasource db {
 }
 
 model Dapp {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   name               String
-  slug               String   @unique
+  slug               String    @unique
   description        String?
   shortDescription   String?
   website            String?
@@ -19,10 +19,10 @@ model Dapp {
   deepLink           String?
   developerName      String?
   developerWebsite   String?
-  status             String   @default("active")
-  isActive           Boolean  @default(true)
-  isVerified         Boolean  @default(false)
-  isSeekerCompatible Boolean  @default(false)
+  status             String    @default("active")
+  isActive           Boolean   @default(true)
+  isVerified         Boolean   @default(false)
+  isSeekerCompatible Boolean   @default(false)
   rating             Float?
   reviewCount        Int?
   pulseScore         Int?
@@ -31,15 +31,15 @@ model Dapp {
   sourceUrl          String?
   metadataUri        String?
   verifiedAt         DateTime?
-  firstSeenAt        DateTime @default(now())
-  lastSeenAt         DateTime @updatedAt
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  firstSeenAt        DateTime  @default(now())
+  lastSeenAt         DateTime  @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  releases   DappRelease[]
-  categories DappCategory[]
-  tags       DappTag[]
-  syncLogs   DappSyncLog[]
+  releases     DappRelease[]
+  categories   DappCategory[]
+  tags         DappTag[]
+  syncLogs     DappSyncLog[]
   interactions WalletDappInteraction[]
 
   @@index([packageName])
@@ -139,19 +139,19 @@ model DappSyncLog {
 }
 
 model Mission {
-  id          String   @id @default(cuid())
-  slug        String   @unique
+  id          String    @id @default(cuid())
+  slug        String    @unique
   title       String
   description String
   kind        String
-  category    String   @default("discovery")
-  target      Int      @default(1)
-  xp          Int      @default(10)
-  isActive    Boolean  @default(true)
+  category    String    @default("discovery")
+  target      Int       @default(1)
+  xp          Int       @default(10)
+  isActive    Boolean   @default(true)
   startsAt    DateTime?
   endsAt      DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   progress MissionProgress[]
 
@@ -160,10 +160,10 @@ model Mission {
 }
 
 model WalletUser {
-  id            String          @id @default(cuid())
-  walletAddress String          @unique
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id            String                  @id @default(cuid())
+  walletAddress String                  @unique
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
   challenges    WalletChallenge[]
   sessions      WalletSession[]
   interactions  WalletDappInteraction[]
@@ -172,13 +172,13 @@ model WalletUser {
 }
 
 model WalletChallenge {
-  id            String      @id @default(cuid())
-  walletUserId  String
-  nonce         String      @unique
-  message       String
-  expiresAt     DateTime
-  usedAt        DateTime?
-  createdAt     DateTime    @default(now())
+  id           String    @id @default(cuid())
+  walletUserId String
+  nonce        String    @unique
+  message      String
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime  @default(now())
 
   walletUser WalletUser @relation(fields: [walletUserId], references: [id], onDelete: Cascade)
 
@@ -187,11 +187,11 @@ model WalletChallenge {
 }
 
 model WalletSession {
-  id           String      @id @default(cuid())
+  id           String   @id @default(cuid())
   walletUserId String
-  tokenHash    String      @unique
+  tokenHash    String   @unique
   expiresAt    DateTime
-  createdAt    DateTime    @default(now())
+  createdAt    DateTime @default(now())
 
   walletUser WalletUser @relation(fields: [walletUserId], references: [id], onDelete: Cascade)
 
@@ -218,18 +218,18 @@ model WalletDappInteraction {
 }
 
 model MissionProgress {
-  id              String    @id @default(cuid())
-  walletAddress   String
-  walletUserId    String?
-  missionId       String
-  progress        Int       @default(0)
-  completedAt     DateTime?
-  proofSignature  String?
-  lastVerifiedAt  DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  walletAddress  String
+  walletUserId   String?
+  missionId      String
+  progress       Int       @default(0)
+  completedAt    DateTime?
+  proofSignature String?
+  lastVerifiedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  mission Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  mission    Mission     @relation(fields: [missionId], references: [id], onDelete: Cascade)
   walletUser WalletUser? @relation(fields: [walletUserId], references: [id], onDelete: Cascade)
 
   @@unique([walletAddress, missionId])
@@ -258,7 +258,7 @@ model WalletAchievement {
   awardedAt     DateTime @default(now())
 
   achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
-  walletUser WalletUser? @relation(fields: [walletUserId], references: [id], onDelete: Cascade)
+  walletUser  WalletUser? @relation(fields: [walletUserId], references: [id], onDelete: Cascade)
 
   @@unique([walletAddress, achievementId])
   @@index([walletAddress])
