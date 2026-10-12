@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b12">
+  <meta name="description" content="Seeker Pulse — a daily activity companion for Solana Seeker users. CLOCK IN hackathon pitch deck.">
+  <title>Seeker Pulse — CLOCK IN Pitch</title>
+  <link rel="icon" href="assets/pulse-mark.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080b12;
+      --panel: #101622;
+      --panel-2: #151e2c;
+      --line: rgba(195, 211, 235, .14);
+      --text: #f4f7fb;
+      --muted: #9cabc0;
+      --mint: #45f7b5;
+      --purple: #a982ff;
+      --orange: #ff9875;
+      --blue: #68c8ff;
+      --display: "Space Grotesk", sans-serif;
+      --body: Inter, sans-serif;
+      --mono: "DM Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--bg); scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 13% 8%, rgba(137, 86, 255, .13), transparent 28%),
+        radial-gradient(ellipse at 90% 85%, rgba(69, 247, 181, .08), transparent 28%),
+        var(--bg);
+      font-family: var(--body);
+    }
+    a { color: inherit; }
+    .toolbar {
+      position: fixed;
+      z-index: 10;
+      inset: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 22px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      background: rgba(8,11,18,.82);
+      backdrop-filter: blur(16px);
+    }
+    .toolbar-brand { display: flex; align-items: center; gap: 9px; font: 700 13px var(--display); letter-spacing: .1em; }
+    .toolbar-brand img { width: 25px; height: 25px; }
+    .toolbar-note { color: var(--muted); font: 11px var(--mono); letter-spacing: .05em; }
+    .toolbar-actions { display: flex; gap: 8px; }
+    .toolbar button {
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      background: var(--panel);
+      font: 600 12px var(--body);
+      cursor: pointer;
+    }
+    .toolbar button:hover { border-color: var(--mint); }
+    .deck { padding: 70px 20px 40px; }
+    .slide {
+      position: relative;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      width: min(100%, 1200px);
+      min-height: min(675px, calc(100svh - 130px));
+      aspect-ratio: 16 / 9;
+      margin: 0 auto 36px;
+      padding: clamp(34px, 6vw, 76px);
+      overflow: hidden;
+      border: 1px solid rgba(208, 223, 246, .12);
+      border-radius: 20px;
+      background:
+        radial-gradient(ellipse at 100% 0%, rgba(69, 247, 181, .055), transparent 36%),
+        linear-gradient(145deg, rgba(17, 24, 37, .98), rgba(10, 14, 22, .98));
+      box-shadow: 0 28px 90px rgba(0,0,0,.26);
+    }
+    .slide::before {
+      position: absolute;
+      z-index: -1;
+      right: -160px;
+      bottom: -210px;
+      width: 470px;
+      height: 470px;
+      border: 1px solid rgba(169,130,255,.1);
+      border-radius: 50%;
+      box-shadow: 0 0 0 36px rgba(169,130,255,.025), 0 0 0 80px rgba(169,130,255,.02);
+      content: "";
+    }
+    .slide-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 34px; }
+    .eyebrow, .micro-label { color: var(--mint); font: 500 11px var(--mono); letter-spacing: .16em; text-transform: uppercase; }
+    .slide-number { color: #718097; font: 11px var(--mono); letter-spacing: .08em; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2, h3 { font-family: var(--display); }
+    h1 { max-width: 800px; margin-bottom: 20px; font-size: clamp(48px, 8vw, 100px); line-height: .94; letter-spacing: -.065em; }
+    h2 { max-width: 850px; margin-bottom: 18px; font-size: clamp(34px, 5vw, 58px); line-height: 1.02; letter-spacing: -.05em; }
+    h3 { margin-bottom: 10px; font-size: 19px; letter-spacing: -.025em; }
+    .lede { max-width: 650px; margin-bottom: 0; color: #c2cddd; font-size: clamp(16px, 2vw, 21px); line-height: 1.6; }
+    .gradient-text { color: transparent; background: linear-gradient(100deg, var(--purple), #d1adff 35%, var(--mint) 86%); background-clip: text; -webkit-background-clip: text; }
+    .cover { background: radial-gradient(ellipse at 78% 30%, rgba(101,68,178,.25), transparent 33%), linear-gradient(145deg, #101622, #090c13 75%); }
+    .cover-content { display: grid; grid-template-columns: 1.15fr .85fr; align-items: center; gap: 24px; }
+    .cover-mark { width: 76px; height: 76px; margin-bottom: 28px; filter: drop-shadow(0 0 35px rgba(69,247,181,.14)); }
+    .cover h1 { font-size: clamp(66px, 10vw, 122px); }
+    .cover .lede { max-width: 540px; }
+    .cover-side { justify-self: end; width: min(100%, 320px); padding: 26px; border: 1px solid var(--line); border-radius: 16px; background: rgba(16,22,34,.8); transform: rotate(2deg); }
+    .cover-side .signal { height: 96px; margin: 20px 0; }
+    .cover-side .signal svg { width: 100%; height: 100%; overflow: visible; }
+    .cover-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
+    .pill { padding: 8px 12px; border: 1px solid var(--line); border-radius: 100px; color: #c6d2e1; font: 11px var(--mono); letter-spacing: .02em; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: clamp(24px, 5vw, 64px); }
+    .pain-points { display: grid; gap: 12px; }
+    .pain-card, .info-card, .feature-card, .roadmap-card {
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: linear-gradient(140deg, rgba(21,30,44,.88), rgba(13,18,28,.88));
+    }
+    .pain-card { display: flex; align-items: flex-start; gap: 14px; color: #d4dce8; font-size: 14px; line-height: 1.5; }
+    .pain-icon { flex: 0 0 27px; display: grid; place-items: center; width: 27px; height: 27px; border-radius: 8px; color: var(--orange); background: rgba(255,152,117,.1); font: 15px var(--mono); }
+    .callout { margin-top: 24px; padding-left: 17px; border-left: 2px solid var(--mint); color: #dce5ef; font-size: 17px; line-height: 1.55; }
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 35px; }
+    .step { min-height: 176px; padding: 19px; border: 1px solid var(--line); border-radius: 13px; background: rgba(16,22,34,.76); }
+    .step-num { display: inline-grid; place-items: center; width: 27px; height: 27px; margin-bottom: 26px; border-radius: 50%; color: #06130e; background: var(--mint); font: 500 12px var(--mono); }
+    .step p, .feature-card p, .info-card p, .roadmap-card p { margin-bottom: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .step h3 { font-size: 16px; }
+    .steps-note { margin-top: 18px; color: #79889c; font: 10px var(--mono); line-height: 1.6; }
+    .product-grid { display: grid; grid-template-columns: 1fr .9fr; align-items: center; gap: 35px; }
+    .feature-list { display: grid; gap: 12px; margin-top: 25px; }
+    .feature-card { display: flex; gap: 13px; padding: 14px 16px; }
+    .feature-dot { flex: 0 0 9px; width: 9px; height: 9px; margin-top: 6px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 12px rgba(69,247,181,.35); }
+    .feature-card h3 { margin-bottom: 4px; font-size: 15px; }
+    .phone-wrap { display: grid; justify-items: center; }
+    .phone { width: min(100%, 285px); padding: 10px; border: 1px solid rgba(223,233,248,.26); border-radius: 34px; background: #06080d; box-shadow: 0 28px 65px rgba(0,0,0,.45), inset 0 0 0 2px #171e2a; transform: rotate(2deg); }
+    .phone-screen { min-height: 460px; padding: 23px 16px 18px; border-radius: 26px; background: radial-gradient(ellipse at top right, rgba(66,95,107,.2), transparent 40%), #0e141e; }
+    .phone-status { display: flex; justify-content: space-between; margin: -5px 3px 24px; color: #b1becf; font: 9px var(--mono); }
+    .phone-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 17px; }
+    .phone-head strong { font: 600 18px var(--display); }
+    .live-dot { color: var(--mint); font: 9px var(--mono); }
+    .phone-score { padding: 14px; border: 1px solid rgba(69,247,181,.17); border-radius: 12px; background: linear-gradient(130deg, rgba(69,247,181,.09), rgba(16,22,34,.9)); }
+    .phone-score small, .phone-stat small { display: block; color: #97a7bb; font: 8px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .phone-score strong { display: block; margin: 8px 0; font: 700 30px var(--display); }
+    .phone-score p { margin: 0; color: #8d9bae; font-size: 8px; line-height: 1.5; }
+    .phone-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 9px 0; }
+    .phone-stat { padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: rgba(21,30,44,.65); }
+    .phone-stat strong { display: block; margin: 7px 0 2px; font: 600 19px var(--display); }
+    .phone-panel { margin-top: 9px; padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: rgba(21,30,44,.55); }
+    .phone-panel small { color: var(--mint); font: 8px var(--mono); letter-spacing: .09em; text-transform: uppercase; }
+    .phone-panel p { margin: 8px 0 0; color: #d6deea; font-size: 10px; line-height: 1.45; }
+    .phone-caption { margin-top: 17px; color: #78879b; font: 9px var(--mono); text-align: center; }
+    .mobile-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 28px; }
+    .info-card { min-height: 161px; }
+    .info-card .micro-label { display: block; margin-bottom: 19px; }
+    .info-card h3 { font-size: 17px; }
+    .status-live { color: var(--mint) !important; }
+    .status-next { color: var(--orange) !important; }
+    .disclaimer { margin-top: 17px; color: #8c9bb0; font-size: 11px; line-height: 1.55; }
+    .architecture { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: stretch; gap: 12px; margin-top: 32px; }
+    .arch-node { display: flex; flex-direction: column; justify-content: center; min-height: 180px; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: rgba(16,22,34,.8); }
+    .arch-node .micro-label { margin-bottom: 19px; }
+    .arch-node h3 { font-size: 17px; }
+    .arch-node p { margin-bottom: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .arch-arrow { align-self: center; color: var(--mint); font: 24px var(--mono); }
+    .trust-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 15px; }
+    .trust-item { padding: 12px 14px; border-radius: 9px; color: #b4c0d0; background: rgba(255,255,255,.035); font-size: 11px; line-height: 1.45; }
+    .trust-item strong { display: block; margin-bottom: 4px; color: var(--text); font: 500 10px var(--mono); }
+    .roadmap { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 28px; }
+    .roadmap-card { min-height: 185px; padding: 22px; }
+    .roadmap-card .micro-label { display: block; margin-bottom: 18px; }
+    .roadmap-card ul { margin: 13px 0 0; padding-left: 17px; color: #aebbd0; font-size: 12px; line-height: 1.75; }
+    .roadmap-foot { margin-top: 16px; color: #78889e; font-size: 10px; line-height: 1.5; }
+    .closing h2 { max-width: 720px; font-size: clamp(43px, 6.6vw, 80px); }
+    .closing .lede { max-width: 620px; }
+    .link-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+    .link-button { display: inline-flex; align-items: center; gap: 8px; padding: 11px 15px; border: 1px solid var(--line); border-radius: 9px; color: #e9f0f8; background: rgba(16,22,34,.9); font-size: 12px; text-decoration: none; }
+    .link-button.primary { border-color: transparent; color: #08120e; background: var(--mint); font-weight: 700; }
+    .closing-meta { margin-top: 28px; color: #8391a6; font: 10px var(--mono); line-height: 1.8; }
+    .slide-footer { position: absolute; right: clamp(34px, 6vw, 76px); bottom: 25px; left: clamp(34px, 6vw, 76px); display: flex; justify-content: space-between; color: #68768a; font: 9px var(--mono); letter-spacing: .09em; text-transform: uppercase; }
+    .dots { position: fixed; z-index: 10; right: 15px; top: 50%; display: grid; gap: 8px; transform: translateY(-50%); }
+    .dots a { width: 7px; height: 7px; border: 1px solid #647187; border-radius: 50%; }
+    .dots a.active { border-color: var(--mint); background: var(--mint); box-shadow: 0 0 10px rgba(69,247,181,.5); }
+    @media (max-width: 760px) {
+      .toolbar { padding: 10px 13px; }
+      .toolbar-note { display: none; }
+      .deck { padding: 68px 10px 25px; }
+      .slide { min-height: 0; aspect-ratio: auto; margin-bottom: 18px; padding: 30px 24px 55px; border-radius: 15px; }
+      .slide-head { margin-bottom: 23px; }
+      .cover-content, .two-col, .product-grid { grid-template-columns: 1fr; }
+      .cover-side { display: none; }
+      .cover h1 { font-size: clamp(60px, 17vw, 90px); }
+      .steps { grid-template-columns: 1fr 1fr; }
+      .step { min-height: 142px; }
+      .step-num { margin-bottom: 16px; }
+      .phone { width: min(100%, 300px); margin-top: 20px; }
+      .mobile-cards { grid-template-columns: 1fr; }
+      .info-card { min-height: 0; }
+      .architecture { grid-template-columns: 1fr; }
+      .arch-node { min-height: 0; }
+      .arch-arrow { justify-self: center; transform: rotate(90deg); }
+      .trust-strip { grid-template-columns: 1fr; }
+      .roadmap { grid-template-columns: 1fr; }
+      .dots { display: none; }
+      .slide-footer { bottom: 17px; }
+    }
+    @media print {
+      @page { size: 13.333in 7.5in; margin: 0; }
+      html, body { width: 13.333in; margin: 0; background: #080b12 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .toolbar, .dots { display: none !important; }
+      .deck { padding: 0; }
+      .slide {
+        width: 13.333in;
+        height: 7.5in;
+        min-height: 0;
+        max-height: 7.5in;
+        margin: 0;
+        padding: .64in .82in;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        break-after: page;
+        page-break-after: always;
+      }
+      .slide:last-child { break-after: auto; page-break-after: auto; }
+      h1 { font-size: 76pt; }
+      h2 { font-size: 42pt; }
+      .cover h1 { font-size: 88pt; }
+      .slide-head { margin-bottom: 22px; }
+      .slide-footer { right: .82in; bottom: .23in; left: .82in; }
+      a { text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar">
+    <div class="toolbar-brand"><img src="assets/pulse-mark.svg" alt="">SEEKER PULSE</div>
+    <div class="toolbar-note">CLOCK IN · SOLANA MOBILE HACKATHON · 2026</div>
+    <div class="toolbar-actions">
+      <button type="button" id="prev" aria-label="Previous slide">←</button>
+      <button type="button" id="next" aria-label="Next slide">→</button>
+      <button type="button" onclick="window.print()">Print / Save PDF</button>
+    </div>
+  </header>
+  <nav class="dots" aria-label="Slide navigation">
+    <a href="#slide-1" aria-label="Slide 1"></a><a href="#slide-2" aria-label="Slide 2"></a>
+    <a href="#slide-3" aria-label="Slide 3"></a><a href="#slide-4" aria-label="Slide 4"></a>
+    <a href="#slide-5" aria-label="Slide 5"></a><a href="#slide-6" aria-label="Slide 6"></a>
+    <a href="#slide-7" aria-label="Slide 7"></a>
+  </nav>
+  <main class="deck">
+    <section class="slide cover" id="slide-1" aria-label="Slide 1: Seeker Pulse">
+      <div class="cover-content">
+        <div>
+          <img class="cover-mark" src="assets/pulse-mark.svg" alt="Seeker Pulse mark">
+          <div class="eyebrow">CLOCK IN · TEAM OSLAAM</div>
+          <h1>Seeker<br><span class="gradient-text">Pulse</span></h1>
+          <p class="lede">A daily activity companion that turns public Solana signals into a clearer Seeker check-in.</p>
+          <div class="cover-meta">
+            <span class="pill">ANDROID · SOLANA</span><span class="pill">.SKR IDENTITY</span><span class="pill">BUILT FOR SEEKER</span>
+          </div>
+        </div>
+        <aside class="cover-side" aria-hidden="true">
+          <div class="micro-label">A clearer daily signal</div>
+          <div class="signal">
+            <svg viewBox="0 0 300 100" fill="none">
+              <path d="M0 55h75l14-23 20 48 24-63 19 38h148" stroke="#45f7b5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M0 83h300" stroke="#283342" stroke-width="1"/>
+              <circle cx="152" cy="55" r="5" fill="#45f7b5"/>
+            </svg>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:end">
+            <div><div class="micro-label">Your wallet. Your day.</div><p style="margin:8px 0 0;color:#d8e1ed;font:600 16px var(--display)">Make activity make sense.</p></div>
+            <span style="color:var(--mint);font:11px var(--mono)">↗</span>
+          </div>
+        </aside>
+      </div>
+      <div class="slide-footer"><span>Independent activity estimate · Not an official Seeker score</span><span>01 / 07</span></div>
+    </section>
+
+    <section class="slide" id="slide-2" aria-label="Slide 2: The opportunity">
+      <div class="slide-head"><span class="eyebrow">THE OPPORTUNITY</span><span class="slide-number">02 / 07</span></div>
+      <div class="two-col">
+        <div>
+          <h2>Your wallet is active.<br><span class="gradient-text">Your progress is scattered.</span></h2>
+          <p class="lede">Seeker users can see on-chain transactions—but turning that trail into a useful daily picture takes work.</p>
+          <div class="callout">Pulse gives the activity you already have a simple, personal place to land.</div>
+        </div>
+        <div class="pain-points">
+          <div class="pain-card"><span class="pain-icon">01</span><span><strong>Identity is disconnected.</strong><br>A wallet address and a human-readable Seeker identity are not always easy to connect.</span></div>
+          <div class="pain-card"><span class="pain-icon">02</span><span><strong>Activity is hard to scan.</strong><br>Transactions, protocol labels, and streaks live across separate views.</span></div>
+          <div class="pain-card"><span class="pain-icon">03</span><span><strong>“What next?” is unclear.</strong><br>A daily companion should help users explore naturally—not ask them to chase a score.</span></div>
+        </div>
+      </div>
+      <div class="slide-footer"><span>Product opportunity · Not a claim of user research or traction</span><span>SEEKER PULSE</span></div>
+    </section>
+
+    <section class="slide" id="slide-3" aria-label="Slide 3: How it works">
+      <div class="slide-head"><span class="eyebrow">THE PRODUCT</span><span class="slide-number">03 / 07</span></div>
+      <h2>One check-in.<br><span class="gradient-text">A more useful view of your day.</span></h2>
+      <p class="lede">A lightweight loop built around the wallet the user already brings.</p>
+      <div class="steps">
+        <article class="step"><span class="step-num">1</span><h3>Find your identity</h3><p>Look up a <code>.skr</code> name or connect a wallet in the Android app.</p></article>
+        <article class="step"><span class="step-num">2</span><h3>Read public signals</h3><p>Review recent wallet activity and protocol labels available from public data.</p></article>
+        <article class="step"><span class="step-num">3</span><h3>See your Pulse</h3><p>Bring today’s activity, recognized protocols, and natural-use streak into one view.</p></article>
+        <article class="step"><span class="step-num">4</span><h3>Choose a next step</h3><p>Get a gentle prompt to explore or continue using Solana—without manufactured activity.</p></article>
+      </div>
+      <p class="steps-note">Activity estimates are based on public transaction data. Coverage can be incomplete; Pulse is not connected to Solana Mobile’s private scoring system.</p>
+      <div class="slide-footer"><span>A useful daily rhythm, not a transaction quota</span><span>SEEKER PULSE</span></div>
+    </section>
+
+    <section class="slide" id="slide-4" aria-label="Slide 4: Product experience">
+      <div class="slide-head"><span class="eyebrow">THE EXPERIENCE</span><span class="slide-number">04 / 07</span></div>
+      <div class="product-grid">
+        <div>
+          <h2>Make the next move<br><span class="gradient-text">feel obvious.</span></h2>
+          <p class="lede">A connected-wallet dashboard makes the daily check-in personal, legible, and actionable.</p>
+          <div class="feature-list">
+            <div class="feature-card"><span class="feature-dot"></span><div><h3>Today, at a glance</h3><p>Progress and observed activity, grounded in the connected wallet.</p></div></div>
+            <div class="feature-card"><span class="feature-dot" style="background:var(--purple)"></span><div><h3>A reason to return</h3><p>Natural-use streaks, missions, and achievements make continuity visible.</p></div></div>
+            <div class="feature-card"><span class="feature-dot" style="background:var(--blue)"></span><div><h3>Explore with context</h3><p>Recognized protocol activity and personalized prompts point toward discovery.</p></div></div>
+          </div>
+        </div>
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="phone-status"><span>9:41</span><span>● ● ●</span></div>
+              <div class="phone-head"><strong>My Pulse</strong><span class="live-dot">● LIVE</span></div>
+              <div class="phone-score"><small>INDEPENDENT PULSE SCORE</small><strong>—</strong><p>Estimate from public activity. Not Solana Mobile's score.</p></div>
+              <div class="phone-stats">
+                <div class="phone-stat"><small>Today</small><strong>—</strong></div>
+                <div class="phone-stat"><small>Day streak</small><strong>—</strong></div>
+                <div class="phone-stat"><small>Protocols</small><strong>—</strong></div>
+                <div class="phone-stat"><small>SKR balance</small><strong>—</strong></div>
+              </div>
+              <div class="phone-panel"><small>YOUR NEXT MOVE</small><p>See your daily progress and find a natural next step.</p></div>
+              <div class="phone-panel"><small>MISSIONS</small><p>Connect wallet&nbsp; · &nbsp;Explore&nbsp; · &nbsp;Keep a streak</p></div>
+            </div>
+          </div>
+          <div class="phone-caption">PRODUCT UI CONCEPT · DASHBOARD VALUES OMITTED</div>
+        </div>
+      </div>
+      <div class="slide-footer"><span>Wallet-connected dashboard · Mobile-first interaction</span><span>SEEKER PULSE</span></div>
+    </section>
+
+    <section class="slide" id="slide-5" aria-label="Slide 5: Native wallet and SKR">
+      <div class="slide-head"><span class="eyebrow">BUILT FOR THE SEEKER ECOSYSTEM</span><span class="slide-number">05 / 07</span></div>
+      <h2>Native wallet access.<br><span class="gradient-text">A real SKR touchpoint.</span></h2>
+      <div class="mobile-cards">
+        <article class="info-card"><span class="micro-label">ANDROID</span><h3>Made for mobile</h3><p>Packaged for Android with Capacitor and Solana Mobile Wallet Adapter support—not only a responsive website.</p></article>
+        <article class="info-card"><span class="micro-label">WALLET</span><h3>Connect, then personalize</h3><p>MWA connects the user’s Solana wallet so Pulse can show their own activity dashboard.</p></article>
+        <article class="info-card"><span class="micro-label">SKR</span><h3>Read the connected balance</h3><p>Pulse can display the wallet’s SKR token balance using Solana token-account data.</p></article>
+      </div>
+      <div class="architecture" style="margin-top:25px">
+        <div class="arch-node"><span class="micro-label">IDENTITY</span><h3>.skr + wallet</h3><p>Resolve a readable identity or connect through MWA.</p></div>
+        <div class="arch-arrow" aria-hidden="true">→</div>
+        <div class="arch-node"><span class="micro-label">ACTIVITY</span><h3>Public Solana data</h3><p>Recognize transactions and calculate an independent estimate.</p></div>
+        <div class="arch-arrow" aria-hidden="true">→</div>
+        <div class="arch-node"><span class="micro-label">CHECK-IN</span><h3>Pulse dashboard</h3><p>Make daily activity and the next step easier to understand.</p></div>
+      </div>
+      <div class="disclaimer"><strong>SKR today:</strong> the integration is read-only balance display. Pulse does not currently pay rewards in SKR, use SKR for purchases, or gate features on SKR ownership.</div>
+      <div class="slide-footer"><span>Android · MWA · public Solana data</span><span>SEEKER PULSE</span></div>
+    </section>
+
+    <section class="slide" id="slide-6" aria-label="Slide 6: Trust and what comes next">
+      <div class="slide-head"><span class="eyebrow">TRUST FIRST · THEN GROW</span><span class="slide-number">06 / 07</span></div>
+      <h2>Useful signals.<br><span class="gradient-text">Honest boundaries.</span></h2>
+      <div class="roadmap">
+        <article class="roadmap-card">
+          <span class="micro-label status-live">LIVE IN THE PROJECT</span>
+          <h3>What Pulse does now</h3>
+          <ul>
+            <li>.skr lookup and wallet connection</li>
+            <li>Public-activity estimates and daily-use streaks</li>
+            <li>MWA wallet access and read-only SKR balance</li>
+            <li>Progress prompts designed around genuine use</li>
+          </ul>
+        </article>
+        <article class="roadmap-card">
+          <span class="micro-label status-next">A DIRECTION TO EXPLORE</span>
+          <h3>Make SKR participation meaningful</h3>
+          <p>Explore opt-in, community-sponsored missions with transparent criteria and SKR-denominated rewards—recognizing genuine ecosystem exploration, not raw transaction volume.</p>
+          <p style="margin-top:10px;color:#ffb69d">Concept only · Not implemented or promised</p>
+        </article>
+      </div>
+      <div class="trust-strip">
+        <div class="trust-item"><strong>NOT OFFICIAL SCORING</strong>Pulse is independent and cannot see Solana Mobile’s private score.</div>
+        <div class="trust-item"><strong>PUBLIC-DATA LIMITS</strong>Labels and transaction history may miss activity.</div>
+        <div class="trust-item"><strong>NO ACTIVITY FARMING</strong>Opening screens or repeating transactions is not the goal.</div>
+      </div>
+      <p class="roadmap-foot">Any future SKR reward design would need transparent rules, anti-abuse controls, and separate implementation. The current app makes no reward guarantee.</p>
+      <div class="slide-footer"><span>Proposed roadmap is clearly distinguished from shipped features</span><span>SEEKER PULSE</span></div>
+    </section>
+
+    <section class="slide closing" id="slide-7" aria-label="Slide 7: Thank you">
+      <div class="slide-head"><span class="eyebrow">CLOCK IN · TEAM OSLAAM</span><span class="slide-number">07 / 07</span></div>
+      <h2>Help Seeker users<br><span class="gradient-text">find their next good move.</span></h2>
+      <p class="lede">Seeker Pulse makes wallet activity easier to understand—and gives everyday exploration a place to build.</p>
+      <div class="link-row">
+        <a class="link-button primary" href="https://seekerpulse.xyz/">Open Seeker Pulse ↗</a>
+        <a class="link-button" href="https://github.com/Oslaam/seeker-pulse">Explore the source ↗</a>
+        <a class="link-button" href="https://seekerpulse.xyz/seekerpulse.apk">Download Android APK ↗</a>
+      </div>
+      <div class="closing-meta">Seeker Pulse · Team Oslaam<br>Independent, public-data activity estimate · Not an official Solana Mobile score</div>
+      <div class="slide-footer"><span>Thank you</span><span>SEEKER PULSE · 2026</span></div>
+    </section>
+  </main>
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    const dots = [...document.querySelectorAll(".dots a")];
+    let current = 0;
+    const show = (index) => {
+      current = Math.max(0, Math.min(slides.length - 1, index));
+      slides[current].scrollIntoView({ behavior: "smooth", block: "start" });
+      dots.forEach((dot, i) => dot.classList.toggle("active", i === current));
+    };
+    document.getElementById("prev").addEventListener("click", () => show(current - 1));
+    document.getElementById("next").addEventListener("click", () => show(current + 1));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight" || event.key === "PageDown") show(current + 1);
+      if (event.key === "ArrowLeft" || event.key === "PageUp") show(current - 1);
+    });
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          current = slides.indexOf(entry.target);
+          dots.forEach((dot, i) => dot.classList.toggle("active", i === current));
+        }
+      }
+    }, { threshold: 0.55 });
+    slides.forEach((slide) => observer.observe(slide));
+    dots.forEach((dot, i) => dot.addEventListener("click", (event) => {
+      event.preventDefault();
+      show(i);
+    }));
+  </script>
+</body>
+</html>
